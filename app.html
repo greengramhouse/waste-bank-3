@@ -1232,14 +1232,10 @@
                     </div>
 
                     <!--
-                      ตารางรายงานเป็นตารางไขว้ (นักเรียน × วันที่) พับเป็นการ์ดไม่ได้
-                      จึงยังต้องเลื่อนแนวนอน — บอกผู้ใช้ตรง ๆ ดีกว่าปล่อยให้งงว่าคอลัมน์หายไปไหน
+                      ตารางรายงานเป็นตารางไขว้ (นักเรียน × วันที่) จำนวนคอลัมน์ไม่คงที่
+                      generateReport() จึงวาดสองมุมมอง: ตารางเต็มบนจอกว้าง (hidden sm:block)
+                      และการ์ดรายคนกางดูรายละเอียดได้บนมือถือ (sm:hidden)
                     -->
-                    <p id="reportScrollHint" class="sm:hidden hidden mt-6 text-xs text-vintage-500 flex items-center gap-1">
-                        <i class="fa-solid fa-arrows-left-right"></i>
-                        เลื่อนตารางซ้าย-ขวาเพื่อดูทุกคอลัมน์ หรือกด "ออกรายงาน PDF" เพื่ออ่านแบบเต็มหน้า
-                    </p>
-
                     <div id="reportContainer"
                         class="mt-8 overflow-x-auto bg-white rounded-xl border border-vintage-100 shadow-sm hidden">
                     </div>
@@ -2092,16 +2088,19 @@
                 }
                 return `
                 <div class="relative">
-                    <button type="button" onclick="toggleNavGroup('${g.key}', event)" id="navgrp-${g.key}"
+                    <button type="button" onclick="toggleNavGroup('${g.key}', event)"
+                        onkeydown="navGroupKey('${g.key}', event)" id="navgrp-${g.key}"
+                        aria-haspopup="true" aria-expanded="false" aria-controls="navmenu-${g.key}"
                         class="navgrp pb-3 pt-2 px-3 border-b-2 border-transparent text-gray-400 hover:text-vintage-600 font-medium whitespace-nowrap transition">
                         <i class="fa-solid ${g.icon} mr-1"></i>${g.label}
                         <i class="fa-solid fa-chevron-down text-[10px] ml-1"></i>
                     </button>
-                    <div id="navmenu-${g.key}"
+                    <div id="navmenu-${g.key}" role="menu" aria-labelledby="navgrp-${g.key}"
                         class="navmenu hidden absolute left-0 top-full mt-1 min-w-[13rem] bg-white rounded-xl border border-vintage-200 shadow-lg overflow-hidden z-50">
                         ${g.tabs.map(t => `
-                        <button onclick="switchTab('${t.id}')" id="tab-${t.id}"
-                            class="navitem w-full text-left px-4 py-3 text-sm text-vintage-800 hover:bg-vintage-50 transition flex items-center gap-2">
+                        <button onclick="switchTab('${t.id}')" onkeydown="navItemKey('${g.key}', event)"
+                            id="tab-${t.id}" role="menuitem"
+                            class="navitem w-full text-left px-4 py-3 text-sm text-vintage-800 hover:bg-vintage-50 focus:bg-vintage-50 focus:outline-none transition flex items-center gap-2">
                             <i class="fa-solid ${t.icon} w-4 text-center text-vintage-500"></i>${t.label}
                         </button>`).join('')}
                     </div>
@@ -2147,20 +2146,84 @@
             const menu = document.getElementById('navmenu-' + key);
             const wasOpen = !menu.classList.contains('hidden');
             closeNavGroups();
-            if (!wasOpen) menu.classList.remove('hidden');
+            if (!wasOpen) {
+                menu.classList.remove('hidden');
+                const head = document.getElementById('navgrp-' + key);
+                if (head) head.setAttribute('aria-expanded', 'true');
+            }
         }
 
         function closeNavGroups() {
             document.querySelectorAll('.navmenu').forEach(m => m.classList.add('hidden'));
+            document.querySelectorAll('.navgrp[aria-expanded]').forEach(b => b.setAttribute('aria-expanded', 'false'));
         }
 
         // คลิกที่อื่นหรือกด Escape ให้ปิด dropdown — พฤติกรรมที่ผู้ใช้คาดหวังจากเมนูทุกที่
         document.addEventListener('click', closeNavGroups);
         document.addEventListener('keydown', e => { if (e.key === 'Escape') closeNavGroups(); });
 
+        /**
+         * โฟกัสรายการลำดับที่ i ใน dropdown — วนรอบเมื่อเลยหัวหรือท้าย
+         * ครูบางคนใช้คีย์บอร์ดอย่างเดียวเพราะเมาส์ห้องคอมพิวเตอร์ใช้ไม่ได้
+         */
+        function focusNavItem(key, i) {
+            const items = Array.from(document.querySelectorAll('#navmenu-' + key + ' .navitem'));
+            if (!items.length) return;
+            items[(i + items.length) % items.length].focus();
+        }
+
+        function openNavGroup(key, focusIndex) {
+            const menu = document.getElementById('navmenu-' + key);
+            if (menu.classList.contains('hidden')) toggleNavGroup(key, null);
+            focusNavItem(key, focusIndex);
+        }
+
+        /** คีย์บอร์ดบนหัวข้อกลุ่ม — ลูกศรลงเปิดแล้วลงรายการแรก ลูกศรขึ้นเปิดแล้วไปรายการสุดท้าย */
+        function navGroupKey(key, e) {
+            if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault(); e.stopPropagation();
+                openNavGroup(key, 0);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault(); e.stopPropagation();
+                openNavGroup(key, -1);
+            } else if (e.key === 'Escape') {
+                closeNavGroups();
+            }
+        }
+
+        /** คีย์บอร์ดในรายการ dropdown — Escape ปิดแล้วคืนโฟกัสให้หัวข้อกลุ่ม ไม่ทิ้งโฟกัสลอย */
+        function navItemKey(key, e) {
+            const items = Array.from(document.querySelectorAll('#navmenu-' + key + ' .navitem'));
+            const at = items.indexOf(e.currentTarget);
+
+            if (e.key === 'ArrowDown') { e.preventDefault(); e.stopPropagation(); focusNavItem(key, at + 1); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); e.stopPropagation(); focusNavItem(key, at - 1); }
+            else if (e.key === 'Home') { e.preventDefault(); e.stopPropagation(); focusNavItem(key, 0); }
+            else if (e.key === 'End') { e.preventDefault(); e.stopPropagation(); focusNavItem(key, -1); }
+            else if (e.key === 'Escape' || e.key === 'Tab') {
+                closeNavGroups();
+                if (e.key === 'Escape') {
+                    e.stopPropagation();
+                    const head = document.getElementById('navgrp-' + key);
+                    if (head) head.focus();
+                }
+            }
+        }
+
+        /** ที่ที่โฟกัสอยู่ก่อนเปิดแผงเมนูรวม — ปิดแล้วต้องคืนกลับไปที่เดิม */
+        let menuSheetLastFocus = null;
+
         function openMenuSheet() {
             const sheet = document.getElementById('menuSheet');
+            menuSheetLastFocus = document.activeElement;
             sheet.classList.remove('hidden');
+
+            // ย้ายโฟกัสทันที ไม่ผูกกับ requestAnimationFrame ของอนิเมชัน
+            // เพราะ rAF ถูกเบราว์เซอร์หน่วงได้ ถ้าผูกไว้ด้วยกันโฟกัสจะค้างอยู่ข้างหลังแผง
+            // preventScroll เพราะแผงเป็น overlay ลอย ไม่ต้องให้หน้าเลื่อนตามโฟกัส
+            const first = document.querySelector('#menuSheetPanel .mtab');
+            if (first) first.focus({ preventScroll: true });
+
             // รอให้เบราว์เซอร์วาดสถานะเริ่มต้นก่อน ไม่งั้นแผงจะเด้งขึ้นมาโดยไม่มีอนิเมชัน
             requestAnimationFrame(() =>
                 document.getElementById('menuSheetPanel').classList.remove('translate-y-full'));
@@ -2171,7 +2234,29 @@
             if (e && e.target.closest && e.target.closest('#menuSheetPanel')) return;
             document.getElementById('menuSheetPanel').classList.add('translate-y-full');
             setTimeout(() => document.getElementById('menuSheet').classList.add('hidden'), 200);
+            // คืนโฟกัสให้ปุ่มที่เปิดแผง ไม่งั้นโฟกัสจะไปโผล่ต้นหน้าจอ
+            if (menuSheetLastFocus && document.contains(menuSheetLastFocus)) menuSheetLastFocus.focus();
+            menuSheetLastFocus = null;
         }
+
+        /**
+         * ขังโฟกัสไว้ในแผงเมนูรวมตราบใดที่ยังเปิดอยู่
+         * แผงเป็น overlay เต็มจอ ถ้าปล่อยให้ Tab หลุดออกไปข้างหลัง ผู้ใช้คีย์บอร์ดจะหลงทาง
+         */
+        document.addEventListener('keydown', e => {
+            const sheet = document.getElementById('menuSheet');
+            if (!sheet || sheet.classList.contains('hidden')) return;
+
+            if (e.key === 'Escape') { e.preventDefault(); closeMenuSheet(); return; }
+            if (e.key !== 'Tab') return;
+
+            const items = Array.from(document.querySelectorAll('#menuSheetPanel .mtab'));
+            if (!items.length) return;
+            const first = items[0], last = items[items.length - 1];
+
+            if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+            else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        });
 
         function switchTab(tabId) {
             if (ADMIN_ONLY_TABS.indexOf(tabId) !== -1 && currentRole !== 'admin') {
@@ -3627,10 +3712,17 @@
 
             let uniqueDates = Array.from(uniqueDatesSet).sort();
 
+            /**
+             * เก็บตัวเลขรายคนไว้ระหว่างวนตาราง เพื่อเอาไปวาดมุมมองการ์ดสำหรับมือถืออีกชุด
+             * ตารางไขว้ (นักเรียน × วันที่) พับด้วย stack-mobile ไม่ได้ เพราะจำนวนคอลัมน์
+             * ไม่คงที่ — ขึ้นกับว่าช่วงที่เลือกมีการรับซื้อกี่ครั้ง
+             */
+            const reportRows = [];
+
             let reportHtml = `
             <div class="p-4">
                 <h3 class="text-xl font-bold text-center text-vintage-800 mb-4 vintage-title">รายการรับซื้อตามช่วงเวลา</h3>
-                <div class="overflow-x-auto">
+                <div class="hidden sm:block overflow-x-auto">
                 <table class="w-full text-left border-collapse whitespace-nowrap border border-vintage-200">
                     <thead>
                         <tr class="bg-vintage-100 text-vintage-800 text-sm border-b border-vintage-200">
@@ -3665,12 +3757,15 @@
             students.filter(s => !s.isTeacher).forEach(student => {
                 const studentTx = filteredTx.filter(t => t.studentId == student.id);
 
+                const no = count++;
+                const fullName = `${student.title}${student.name} ${student.surname}`;
                 let rowHtml = `<tr>
-                    <td class="py-2 px-4 border border-vintage-200 text-center">${count++}</td>
-                    <td class="py-2 px-4 border border-vintage-200">${student.title}${student.name} ${student.surname}</td>`;
+                    <td class="py-2 px-4 border border-vintage-200 text-center">${no}</td>
+                    <td class="py-2 px-4 border border-vintage-200">${fullName}</td>`;
 
                 let studentTotalWeight = 0;
                 let studentTotalMoney = 0;
+                const perDate = [];
 
                 uniqueDates.forEach(dateStr => {
                     let w = 0;
@@ -3688,6 +3783,7 @@
                     studentTotalMoney += m;
                     dateTotals[dateStr].weight += w;
                     dateTotals[dateStr].money += m;
+                    if (w > 0 || m > 0) perDate.push({ date: dateStr, weight: w, money: m });
 
                     rowHtml += `
                         <td class="py-2 px-4 border border-vintage-200 text-right">${w > 0 ? w.toFixed(2) : '-'}</td>
@@ -3697,6 +3793,7 @@
 
                 sumTotalWeight += studentTotalWeight;
                 sumTotalMoney += studentTotalMoney;
+                reportRows.push({ no, fullName, perDate, totalWeight: studentTotalWeight, totalMoney: studentTotalMoney });
 
                 rowHtml += `
                     <td class="py-2 px-4 border border-vintage-200 text-right font-bold bg-vintage-50">${studentTotalWeight > 0 ? studentTotalWeight.toFixed(2) : '-'}</td>
@@ -3725,11 +3822,52 @@
                     </tbody>
                 </table>
                 </div>
+            `;
+
+            // ---- มุมมองมือถือ: การ์ดรายคน แทนตารางไขว้ที่ต้องเลื่อนซ้าย-ขวา ----
+            // แสดงยอดรวมเป็นตัวใหญ่ ส่วนรายละเอียดแต่ละครั้งซ่อนไว้ใน <details>
+            // เพราะสิ่งที่ครูมองหาบนมือถือคือ "คนนี้ได้เท่าไร" ไม่ใช่ตัวเลขทุกช่อง
+            const withActivity = reportRows.filter(r => r.totalWeight > 0 || r.totalMoney > 0);
+            const quiet = reportRows.length - withActivity.length;
+
+            reportHtml += `
+                <div class="sm:hidden">
+                    <div class="rounded-xl bg-vintage-100 p-4 mb-3">
+                        <div class="text-xs text-vintage-600 mb-1">รวมทั้งสิ้น ${uniqueDates.length} ครั้ง</div>
+                        <div class="flex justify-between items-baseline gap-3">
+                            <span class="text-sm text-vintage-700">${sumTotalWeight.toFixed(2)} กก.</span>
+                            <span class="text-xl font-bold text-green-700">฿${sumTotalMoney.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        ${withActivity.map(r => `
+                        <details class="rounded-xl border border-vintage-200 bg-white overflow-hidden">
+                            <summary class="flex items-center justify-between gap-2 p-3 min-h-[52px] cursor-pointer list-none">
+                                <span class="min-w-0 flex-1">
+                                    <span class="text-xs text-vintage-400 mr-1">${r.no}.</span>
+                                    <span class="text-sm text-vintage-800">${r.fullName}</span>
+                                </span>
+                                <span class="text-right shrink-0">
+                                    <span class="block text-sm font-bold text-green-700">฿${r.totalMoney.toFixed(2)}</span>
+                                    <span class="block text-[11px] text-vintage-500">${r.totalWeight.toFixed(2)} กก.</span>
+                                </span>
+                                <i class="fa-solid fa-chevron-down text-[10px] text-vintage-400 shrink-0"></i>
+                            </summary>
+                            <div class="border-t border-vintage-100 divide-y divide-vintage-50">
+                                ${r.perDate.map(d => `
+                                <div class="flex justify-between gap-2 px-3 py-2 text-xs">
+                                    <span class="text-vintage-600">${toThaiLong(d.date)}</span>
+                                    <span class="text-vintage-700 shrink-0">${d.weight.toFixed(2)} กก. · <span class="text-green-700 font-semibold">฿${d.money.toFixed(2)}</span></span>
+                                </div>`).join('')}
+                            </div>
+                        </details>`).join('')}
+                    </div>
+                    ${quiet ? `<p class="mt-3 text-xs text-vintage-500">ไม่แสดงนักเรียนอีก ${quiet} คนที่ไม่มีรายการในช่วงนี้ — ดูรายชื่อครบทุกคนได้ในตารางบนจอกว้างหรือใน PDF</p>` : ''}
+                </div>
             </div>
             `;
 
             document.getElementById('reportPlaceholder').classList.add('hidden');
-            document.getElementById('reportScrollHint').classList.remove('hidden');
             const container = document.getElementById('reportContainer');
             container.innerHTML = reportHtml;
             container.classList.remove('hidden');
