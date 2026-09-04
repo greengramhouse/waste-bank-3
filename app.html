@@ -913,9 +913,31 @@
                             <i class="fa-solid fa-user-graduate text-gold-500"></i> สรุปข้อมูลบุคคล
                         </h2>
                         <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                            <select id="summaryStudentSelect"
-                                class="w-full sm:w-72 px-4 py-2 rounded-lg border border-vintage-200 focus:border-vintage-500 outline-none text-sm bg-white"
-                                onchange="renderStudentSummary()">
+                            <!--
+                              ช่องค้นหาแทน dropdown ยาว ๆ — ห้องหนึ่งมี 35 คน ส่วนแอดมินเห็น 303 คน
+                              การเลื่อนหาชื่อในรายการยาวขนาดนั้นบนมือถือใช้เวลานานเกินไป
+                              <select> เดิมยังอยู่แต่ซ่อนไว้ ทำหน้าที่เก็บค่าที่เลือก
+                              เพื่อให้โค้ดส่วนอื่นที่อ่าน summaryStudentSelect.value ทำงานเหมือนเดิม
+                            -->
+                            <div class="relative w-full sm:w-72">
+                                <label for="summaryStudentSearch" class="sr-only">ค้นหานักเรียน</label>
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-vintage-400 text-sm pointer-events-none"></i>
+                                <input id="summaryStudentSearch" type="text" role="combobox" autocomplete="off"
+                                    aria-expanded="false" aria-controls="summaryStudentList" aria-autocomplete="list"
+                                    placeholder="พิมพ์ชื่อ หรือรหัสนักเรียน"
+                                    class="w-full min-h-[44px] pl-9 pr-9 py-2 rounded-lg border border-vintage-200 focus:border-vintage-500 outline-none text-sm bg-white"
+                                    oninput="filterStudentPicker()" onfocus="openStudentPicker()"
+                                    onkeydown="studentPickerKey(event)">
+                                <button type="button" id="summaryStudentClear" onclick="clearStudentPicker()"
+                                    aria-label="ล้างการค้นหา"
+                                    class="hidden absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full text-vintage-400 hover:text-vintage-700 hover:bg-vintage-50">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                                <div id="summaryStudentList" role="listbox"
+                                    class="hidden absolute z-50 left-0 right-0 mt-1 max-h-72 overflow-y-auto bg-white rounded-xl border border-vintage-200 shadow-lg">
+                                </div>
+                            </div>
+                            <select id="summaryStudentSelect" class="hidden" onchange="renderStudentSummary()">
                                 <option value="">-- เลือกนักเรียน --</option>
                             </select>
                             <button onclick="refreshTransactions()" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition shadow-sm text-sm whitespace-nowrap">
@@ -2140,6 +2162,11 @@
 
                     // Clear dropdowns so they can be repopulated for the next user
                     document.getElementById('summaryStudentSelect').innerHTML = '<option value="">-- เลือกนักเรียน --</option>';
+                    // ช่องค้นหาต้องล้างด้วย ไม่งั้นครูคนถัดไปจะเห็นชื่อเด็กห้องอื่นค้างอยู่
+                    document.getElementById('summaryStudentSearch').value = '';
+                    document.getElementById('summaryStudentList').innerHTML = '';
+                    document.getElementById('summaryStudentClear').classList.add('hidden');
+                    studentSummaryCache = { id: null, rows: [] };
                     document.getElementById('summaryRoomSelect').innerHTML = '<option value="all">-- รวมทุกห้อง --</option>';
 
                     resetDepositForm();
@@ -3412,6 +3439,134 @@
             }
             renderStudentSummary();
         }
+
+        // ---------- ช่องค้นหานักเรียนในหน้าสรุปรายคน ----------
+
+        /**
+         * ตำแหน่งที่ไฮไลต์อยู่ในรายการที่กรองแล้ว (-1 = ยังไม่ได้เลือกอะไร)
+         * เก็บแยกจาก DOM เพราะรายการถูกวาดใหม่ทุกครั้งที่พิมพ์
+         */
+        let studentPickerIndex = -1;
+
+        /** รายชื่อที่ตรงกับคำค้น — ค้นได้ทั้งรหัส ชื่อ นามสกุล และห้อง */
+        function studentPickerMatches() {
+            const q = document.getElementById('summaryStudentSearch').value.trim().toLowerCase();
+            const list = visibleStudents();
+            if (!q) return list;
+            return list.filter(s =>
+                String(s.id).toLowerCase().includes(q) ||
+                `${s.title}${s.name} ${s.surname}`.toLowerCase().includes(q) ||
+                String(s.room || '').toLowerCase().includes(q)
+            );
+        }
+
+        function filterStudentPicker() {
+            const box = document.getElementById('summaryStudentList');
+            const input = document.getElementById('summaryStudentSearch');
+            const matches = studentPickerMatches();
+            studentPickerIndex = -1;
+
+            document.getElementById('summaryStudentClear').classList.toggle('hidden', !input.value);
+
+            if (matches.length === 0) {
+                box.innerHTML = '<div class="px-4 py-3 text-sm text-vintage-500">ไม่พบชื่อที่ค้นหา ลองพิมพ์เฉพาะชื่อต้นหรือรหัส</div>';
+            } else {
+                // จำกัดจำนวนที่วาด — แอดมินเห็น 303 คน วาดทั้งหมดทุกตัวอักษรที่พิมพ์จะหน่วง
+                const shown = matches.slice(0, 50);
+                box.innerHTML = shown.map((s, i) => `
+                    <button type="button" role="option" data-idx="${i}" data-id="${s.id}"
+                        onclick="pickStudent('${s.id}')"
+                        class="spick w-full text-left px-4 py-3 min-h-[44px] text-sm hover:bg-vintage-50 flex items-center justify-between gap-2 border-b border-vintage-50 last:border-0">
+                        <span class="min-w-0">
+                            <span class="text-vintage-800">${s.title}${s.name} ${s.surname}</span>
+                            <span class="block text-xs text-vintage-500">รหัส ${s.id}${s.isTeacher ? ' · ครู' : ''}</span>
+                        </span>
+                        <span class="text-xs text-vintage-500 shrink-0">${s.room || ''}</span>
+                    </button>`).join('')
+                    + (matches.length > shown.length
+                        ? `<div class="px-4 py-2 text-xs text-vintage-500 bg-vintage-50">แสดง ${shown.length} จาก ${matches.length} คน — พิมพ์เพิ่มเพื่อค้นให้แคบลง</div>`
+                        : '');
+            }
+            openStudentPicker();
+        }
+
+        function openStudentPicker() {
+            const box = document.getElementById('summaryStudentList');
+            if (!box.innerHTML) filterStudentPicker();
+            box.classList.remove('hidden');
+            document.getElementById('summaryStudentSearch').setAttribute('aria-expanded', 'true');
+        }
+
+        function closeStudentPicker() {
+            const box = document.getElementById('summaryStudentList');
+            if (!box) return;
+            box.classList.add('hidden');
+            document.getElementById('summaryStudentSearch').setAttribute('aria-expanded', 'false');
+            studentPickerIndex = -1;
+        }
+
+        /** เลือกคนนี้ — ตั้งค่าใน <select> ที่ซ่อนไว้ แล้วให้ onchange เดิมทำงานต่อ */
+        function pickStudent(id) {
+            const s = visibleStudents().find(x => String(x.id) === String(id));
+            if (!s) return;
+
+            document.getElementById('summaryStudentSearch').value = `${s.title}${s.name} ${s.surname}`;
+            document.getElementById('summaryStudentClear').classList.remove('hidden');
+            closeStudentPicker();
+
+            const select = document.getElementById('summaryStudentSelect');
+            select.value = String(id);
+            renderStudentSummary();
+        }
+
+        function clearStudentPicker() {
+            const input = document.getElementById('summaryStudentSearch');
+            input.value = '';
+            document.getElementById('summaryStudentClear').classList.add('hidden');
+            document.getElementById('summaryStudentSelect').value = '';
+            renderStudentSummary();
+            filterStudentPicker();
+            input.focus();
+        }
+
+        /** ไฮไลต์รายการลำดับที่ i แล้วเลื่อนให้เห็น */
+        function highlightStudentOption(i) {
+            const opts = Array.from(document.querySelectorAll('#summaryStudentList .spick'));
+            if (!opts.length) return;
+            studentPickerIndex = (i + opts.length) % opts.length;
+            opts.forEach((el, n) => el.classList.toggle('bg-vintage-50', n === studentPickerIndex));
+            opts[studentPickerIndex].scrollIntoView({ block: 'nearest' });
+        }
+
+        /** คีย์บอร์ดในช่องค้นหา — ใช้แป้นเดียวกับ dropdown เมนู ครูจะได้ไม่ต้องจำสองแบบ */
+        function studentPickerKey(e) {
+            const open = !document.getElementById('summaryStudentList').classList.contains('hidden');
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (!open) return openStudentPicker();
+                highlightStudentOption(studentPickerIndex + 1);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (!open) return openStudentPicker();
+                highlightStudentOption(studentPickerIndex - 1);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                const opts = document.querySelectorAll('#summaryStudentList .spick');
+                // ยังไม่ได้เลือกด้วยลูกศร แต่ผลค้นเหลือคนเดียว = เอาคนนั้นเลย
+                const target = studentPickerIndex >= 0 ? opts[studentPickerIndex] : (opts.length === 1 ? opts[0] : null);
+                if (target) pickStudent(target.dataset.id);
+            } else if (e.key === 'Escape') {
+                closeStudentPicker();
+            }
+        }
+
+        // คลิกนอกช่องค้นหาให้ปิดรายการ เหมือนที่ dropdown เมนูทำ
+        document.addEventListener('click', e => {
+            if (!e.target.closest || !e.target.closest('#summaryStudentSearch, #summaryStudentList, #summaryStudentClear')) {
+                closeStudentPicker();
+            }
+        });
 
         /** ช่วงวันของปีการศึกษา พ.ศ. หนึ่ง ๆ — เปิดเทอมพฤษภาคม ปิดปีการศึกษาเมษายนปีถัดไป */
         function schoolYearRange(sy) {
