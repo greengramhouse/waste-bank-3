@@ -2,6 +2,12 @@
 
 ระบบธนาคารขยะโรงเรียนชุมชนวัดไทยงาม
 กำลังย้ายฐานข้อมูลจาก Google Sheets ไป Cloud Firestore — แผนเต็มอยู่ที่ [`docs/plan.md`](docs/plan.md)
+สถานะงานล่าสุดอยู่ที่ [`docs/progress.md`](docs/progress.md) — **อ่านไฟล์นั้นก่อนทำงานต่อ**
+
+| | |
+|---|---|
+| หน้าแรก (ระบบเดิม Google Sheets) | https://greengramhouse.github.io/waste-bank-3/ |
+| ระบบใหม่บน Firestore | https://greengramhouse.github.io/waste-bank-3/app.html |
 
 ---
 
@@ -17,7 +23,9 @@
 ├── README.md                   ไฟล์นี้
 │
 ├── docs/
-│   └── plan.md                 แผนการย้ายฐานข้อมูลทีละเฟส
+│   ├── plan.md                 แผนการย้ายฐานข้อมูลทีละเฟส
+│   ├── progress.md             ★ สถานะงาน — อ่านก่อนทำต่อ
+│   └── teacher-guide.html      คู่มือครู 1 แผ่น A4 พิมพ์แจกได้
 │
 ├── firebase/
 │   ├── firestore.rules         กฎความปลอดภัย — กำแพงเดียวที่กันข้อมูลจริง
@@ -28,12 +36,16 @@
 │
 ├── tools/                      สคริปต์ย้ายข้อมูล รันในเครื่อง ไม่ได้ deploy
 │   ├── config.mjs              ค่าคงที่ + ตัวช่วยเรื่องวันที่/ชื่อ
-│   ├── accounts.json           ★ บัญชีครูและแอดมิน — แก้รหัสผ่านที่นี่
+│   ├── accounts.json           ★ บัญชีครูและแอดมิน + รหัสจริง (gitignored)
 │   ├── export-sheets.mjs       ดึงข้อมูลจากชีตมาเป็น JSON
 │   ├── seed-firestore.mjs      เขียนลง Firestore + สร้างบัญชี Auth + ตั้ง custom claims
 │   ├── verify.mjs              ตรวจความถูกต้องหลังย้าย
 │   ├── test-rules.mjs          ทดสอบ Security Rules กับฐานจริง (ล้างข้อมูลทดสอบให้เอง)
 │   ├── recompute-balances.mjs  คำนวณยอดคงเหลือใหม่จากธุรกรรมจริง
+│   ├── set-passwords.mjs       สุ่มรหัสผ่านรายคนแล้วอัปเดตเข้า Firebase Auth
+│   ├── make-handout.mjs        ใบแจ้งบัญชีรายคนไว้พิมพ์แจกครู
+│   ├── switch-live.mjs         สลับว่าหน้าแรกคือระบบไหน (ตัดระบบ/ย้อนกลับ)
+│   ├── add-student-notice.mjs  แปะป้ายช่วงเปลี่ยนผ่านบนหน้านักเรียน
 │   ├── data/                   ผลลัพธ์จาก export (gitignored — มีชื่อนักเรียนจริง)
 │   └── service-account.json    กุญแจ Firebase (gitignored — ห้ามขึ้น repo)
 │
@@ -61,9 +73,16 @@ npm run export
 ได้ `tools/data/Data.json` (303 แถว), `Users.json` (14), `WasteTypes.json` (2)
 
 ### 2. ตั้งรหัสผ่านครู
-แก้ `tools/accounts.json` — เปลี่ยน `defaultPassword` และ/หรือใส่ `password` รายคน
+```bash
+npm run set-passwords              # ดูว่าจะได้รหัสอะไรบ้าง ยังไม่เขียนอะไร
+npm run set-passwords -- --apply   # สุ่มรหัสรายคนแล้วอัปเดตเข้า Firebase Auth
+npm run handout                    # ใบแจ้งรหัสไว้พิมพ์แจก → docs/handout-passwords.html
+```
+
+รหัสถูกเขียนกลับลง `tools/accounts.json` (อยู่ใน .gitignore เพราะเป็นรหัสจริง)
 
 > ⚠️ Firebase บังคับรหัสผ่านอย่างน้อย **6 ตัวอักษร** รหัส `1234` เดิมใช้ไม่ได้แล้ว
+> **อย่าใช้รหัสเดียวกันทั้งโรงเรียน** — ครูจะเข้าบัญชีกันเองได้ แล้วประวัติผู้บันทึกจะเชื่อถือไม่ได้
 
 ### 3. ซ้อมก่อนเขียนจริง
 ```bash

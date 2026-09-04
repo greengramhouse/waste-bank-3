@@ -42,13 +42,18 @@
 | 1 | ตั้งรหัสผ่านใหม่รายคน | ✅ เสร็จ 4 ก.ย. | `npm run set-passwords -- --apply` |
 | 2 | ใบแจ้งรหัสไว้พิมพ์แจกครู | ✅ สร้างแล้ว | `npm run handout -- --url https://ที่อยู่จริง/` |
 | 3 | คู่มือครู 1 แผ่น A4 | ✅ เสร็จ | เปิด `docs/teacher-guide.html` แล้ว Ctrl+P |
-| 4 | git repo ในเครื่อง | ✅ commit แล้ว | เหลือต่อ remote แล้ว push |
+| 4 | push ขึ้น GitHub | ✅ เสร็จ 4 ก.ย. | [greengramhouse/waste-bank-3](https://github.com/greengramhouse/waste-bank-3) branch `main` |
+| 4.1 | เปิด GitHub Pages | ⬜ ต้องทำใน repo settings | Settings → Pages → `main` / root |
+| 4.2 | เพิ่ม `greengramhouse.github.io` ใน Firebase authorized domains | ⬜ **ห้ามลืม** ไม่งั้นครูล็อกอินไม่ได้ | Firebase Console → Authentication → Settings |
 | 5 | จำกัด Browser API key ด้วย HTTP referrer | ⬜ ต้องทำบน [Cloud Console](https://console.cloud.google.com/apis/credentials?project=ecopink) | — |
 | 6 | แขวนป้ายบน `student.html` | ⬜ พร้อมรัน | `npm run notice -- --apply` |
 | 7 | ตัดระบบ (สลับหน้าแรก) | ⬜ ยังไม่ถึงเวลา | `npm run live:new` |
 
+**ที่อยู่เว็บ** — https://greengramhouse.github.io/waste-bank-3/
+ระบบใหม่อยู่ที่ `/app.html` · หน้าแรกยังเป็นระบบเดิมบน Google Sheets จนกว่าจะสั่ง `npm run live:new`
+
 **ลำดับที่แนะนำ** — ทดลองใช้คู่ขนาน 1–2 สัปดาห์ก่อนตัดจริง
-1. push ขึ้น GitHub Pages แล้วให้ครูเข้าที่ `/app.html` (หน้าแรกยังเป็นระบบเดิม)
+1. เปิด Pages + เพิ่ม authorized domain แล้วให้ครูเข้าที่ `/app.html`
 2. แจกใบรหัส + คู่มือ แล้วให้ครูลองบันทึกจริงคู่ขนานกับของเดิม
 3. ครบสองสัปดาห์แล้วค่อย `npm run notice -- --apply` และ `npm run live:new`
 4. **อย่าเพิ่งลบ deployment ของ Apps Script** เก็บไว้ย้อนกลับได้ 1–2 สัปดาห์แรก
