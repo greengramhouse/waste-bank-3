@@ -1681,12 +1681,17 @@
 
         /** ผลกระทบของธุรกรรมหนึ่งรายการต่อเอกสารยอดสรุป (คูณ -1 เมื่อลบรายการ) */
         function balanceDelta(tx, sign) {
-            const amount = (Number(tx.amount) || 0) * sign;
+            const original = Number(tx.amount) || 0;   // ค่าของรายการต้นฉบับ ยังไม่คูณ sign
+            const amount = original * sign;
             const weight = (Number(tx.weight) || 0) * sign;
             const points = (Number(tx.points) || 0) * sign;
+
+            // ต้องตัดสินว่ารายการนี้เป็น "ฝาก" หรือ "ถอน" จากค่าต้นฉบับ ไม่ใช่จากค่าที่คูณ sign แล้ว
+            // ไม่งั้นการลบรายการฝากจะกลายเป็นการเพิ่มยอดถอน แทนที่จะลดยอดฝาก
+            // (balance รวมยังถูก แต่ช่อง "ยอดฝาก/ยอดถอน" ในหน้าค้นหายอดจะเพี้ยน)
             return {
-                totalDeposit: FieldValue.increment(amount > 0 ? amount : 0),
-                totalWithdraw: FieldValue.increment(amount < 0 ? -amount : 0),
+                totalDeposit: FieldValue.increment(original > 0 ? amount : 0),
+                totalWithdraw: FieldValue.increment(original < 0 ? -amount : 0),
                 balance: FieldValue.increment(amount),
                 totalWeight: FieldValue.increment(weight),
                 totalPoints: FieldValue.increment(points),
@@ -2439,14 +2444,12 @@
 
             // Render items
             paginatedStudents.forEach((s, index) => {
-                let totalW = 0, totalP = 0, totalMoney = 0;
-                transactions.forEach(t => {
-                    if (t.studentId == s.id) {
-                        totalW += parseFloat(t.weight) || 0;
-                        totalMoney += parseFloat(t.price) || 0;
-                        totalP += parseFloat(t.points) || 0;
-                    }
-                });
+                // ยอดสะสมมาจาก balances ไม่ใช่การไล่บวกธุรกรรมทั้งปีทีละคน
+                // ลิสต์นี้วาดใหม่บ่อยมาก การวนธุรกรรมซ้ำทุกแถวทำให้หน่วงตอนข้อมูลเยอะ
+                const bal = memberTotals(s.id);
+                const totalW = bal.totalWeight;
+                const totalP = bal.totalPoints;
+                const totalMoney = bal.balance;
 
                 const isSelected = selectedStudent && selectedStudent.id === s.id;
                 const borderClass = isSelected ? 'border-vintage-500 ring-1 ring-vintage-500' : 'border-vintage-200 hover:border-vintage-400';
@@ -2964,6 +2967,21 @@
 
         /** มีข้อมูลใหม่รออยู่แต่ยังวาดไม่ได้เพราะครูกรอกค้าง */
         let rtPendingUpdate = false;
+
+        /**
+         * ยอดสะสมของคนหนึ่งคน — แหล่งความจริงเดียวของทุกหน้าที่แสดงยอดเงิน
+         *
+         * อ่านจาก balances ที่ Firestore คำนวณให้ด้วย FieldValue.increment() ตอนบันทึก/ลบ
+         * ไม่ใช่การบวกธุรกรรมเองในหน้าเว็บ เพราะการบวกเองต้องโหลดธุรกรรมทั้งปีมาก่อน
+         * (~8,000 รายการ) ทั้งที่ balances มีคำตอบอยู่แล้วใน 1 เอกสาร
+         *
+         * คืนศูนย์ทั้งชุดถ้ายังโหลดไม่เสร็จหรือไม่มีเอกสาร — หน้าจอจะได้ไม่พังตอนเปิดใหม่ ๆ
+         */
+        function memberTotals(memberId) {
+            return balancesMap[String(memberId)] || {
+                balance: 0, totalDeposit: 0, totalWithdraw: 0, totalWeight: 0, totalPoints: 0
+            };
+        }
 
         /**
          * ครูกำลังกรอกอะไรค้างไว้อยู่หรือเปล่า
@@ -4151,26 +4169,16 @@
          * รายการถอนถูกบันทึกเป็นยอดเงินติดลบไว้ จึงแยกฝาก-ถอนด้วยเครื่องหมายของตัวเลข
          */
         function getBalanceRows() {
-            const totals = {};
-            transactions.forEach(t => {
-                const id = String(t.studentId);
-                if (!totals[id]) totals[id] = { deposit: 0, withdraw: 0 };
-
-                const amount = parseFloat(t.price) || 0;
-                if (amount >= 0) totals[id].deposit += amount;
-                else totals[id].withdraw += -amount;
-            });
-
             return visibleStudents().map(s => {
-                const t = totals[String(s.id)] || { deposit: 0, withdraw: 0 };
+                const b = memberTotals(s.id);
                 return {
                     id: s.id,
                     fullName: `${s.title}${s.name} ${s.surname}`,
                     room: s.room,
                     isTeacher: s.isTeacher,
-                    deposit: t.deposit,
-                    withdraw: t.withdraw,
-                    balance: t.deposit - t.withdraw
+                    deposit: b.totalDeposit,
+                    withdraw: b.totalWithdraw,
+                    balance: b.balance
                 };
             });
         }
@@ -4559,11 +4567,7 @@
          * รายการถอนถูกบันทึกเป็นค่าติดลบไว้แล้ว จึงหักออกให้เองโดยอัตโนมัติ
          */
         function getWithdrawBalance(studentId) {
-            let total = 0;
-            transactions.forEach(t => {
-                if (t.studentId == studentId) total += parseFloat(t.price) || 0;
-            });
-            return total;
+            return memberTotals(studentId).balance;
         }
 
         /**
