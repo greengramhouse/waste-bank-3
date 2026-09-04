@@ -24,7 +24,7 @@ const URL_ARG = (() => {
   const i = process.argv.indexOf('--url');
   return i !== -1 && process.argv[i + 1] ? process.argv[i + 1] : null;
 })();
-const SITE_URL = URL_ARG || 'https://ecopink.github.io/waste-bank/';
+const SITE_URL = URL_ARG || 'https://greengramhouse.github.io/waste-bank-3/';
 
 const accountsFile = JSON.parse(await readFile(join(HERE, 'accounts.json'), 'utf8'));
 const accounts = accountsFile.accounts || [];
@@ -145,6 +145,6 @@ await writeFile(OUT, html, 'utf8');
 console.log(`✓ สร้าง ${OUT}`);
 console.log(`  ${accounts.length} ใบ · ที่อยู่เว็บบนบัตร: ${SITE_URL}`);
 if (!URL_ARG) {
-  console.log('  ⚠ ยังใช้ที่อยู่ตัวอย่าง — ใส่ --url https://... เมื่อรู้โดเมนจริง');
+  console.log('  (ที่อยู่เริ่มต้นของ GitHub Pages — เปลี่ยนได้ด้วย --url)');
 }
 console.log('  เปิดไฟล์ในเบราว์เซอร์แล้ว Ctrl+P เพื่อพิมพ์');

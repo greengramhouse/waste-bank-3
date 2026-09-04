@@ -223,7 +223,9 @@ async function seedWasteTypes(rows) {
  */
 async function seedUsers(accountsFile, members) {
   const memberIds = new Set(members.map(m => m.id));
-  const defaultPassword = accountsFile.defaultPassword || 'ecopink2569';
+  // ไม่มีรหัสสำรองฝังในโค้ด — repo นี้เป็น public ใครก็อ่านได้
+  // บัญชีที่ไม่มีรหัสจะถูกข้าม แล้วให้ไปตั้งด้วย set-passwords.mjs ซึ่งสุ่มรายคน
+  const defaultPassword = accountsFile.defaultPassword || '';
   const accounts = accountsFile.accounts;
 
   console.log(`\n[4/5] บัญชีผู้ใช้ — ${accounts.length} บัญชี`);
@@ -232,6 +234,11 @@ async function seedUsers(accountsFile, members) {
     const email = usernameToEmail(acc.username);
     const password = acc.password || defaultPassword;
 
+    if (!password) {
+      console.warn(`  ⚠ ${acc.username}: ไม่มีรหัสผ่านใน accounts.json — ข้าม`);
+      console.warn(`     ตั้งรหัสสุ่มให้ด้วย: node tools/set-passwords.mjs --apply --only ${acc.username}`);
+      continue;
+    }
     if (password.length < 6) {
       console.warn(`  ⚠ ${acc.username}: รหัสสั้นกว่า 6 ตัว Firebase จะปฏิเสธ — ข้าม`);
       continue;
