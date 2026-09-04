@@ -24,7 +24,12 @@ const URL_ARG = (() => {
   const i = process.argv.indexOf('--url');
   return i !== -1 && process.argv[i + 1] ? process.argv[i + 1] : null;
 })();
-const SITE_URL = URL_ARG || 'https://greengramhouse.github.io/waste-bank-3/';
+/**
+ * ระหว่างช่วงคู่ขนาน หน้าแรกของเว็บยังเป็นระบบเดิมบน Google Sheets ที่หน้าตาเหมือนกันทุกอย่าง
+ * บัตรจึงต้องพิมพ์ที่อยู่ที่ลงท้ายด้วย /app.html ไม่งั้นครูจะกรอกรหัสใหม่ในระบบเดิมแล้วเข้าไม่ได้
+ * ตอนตัดระบบเสร็จแล้ว (npm run live:new) ค่อยเปลี่ยนกลับเป็น root
+ */
+const SITE_URL = URL_ARG || 'https://greengramhouse.github.io/waste-bank-3/app.html';
 
 const accountsFile = JSON.parse(await readFile(join(HERE, 'accounts.json'), 'utf8'));
 const accounts = accountsFile.accounts || [];

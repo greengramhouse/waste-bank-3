@@ -7,7 +7,11 @@
 | | |
 |---|---|
 | หน้าแรก (ระบบเดิม Google Sheets) | https://greengramhouse.github.io/waste-bank-3/ |
-| ระบบใหม่บน Firestore | https://greengramhouse.github.io/waste-bank-3/app.html |
+| **ระบบใหม่บน Firestore — ที่ครูต้องใช้** | https://greengramhouse.github.io/waste-bank-3/app.html |
+
+> ⚠️ สองระบบอยู่บนโดเมนเดียวกันและหน้าล็อกอินหน้าตาเหมือนกัน
+> ระบบใหม่มีป้าย **"ระบบใหม่ · ใช้รหัสผ่านที่ขึ้นต้นด้วย eco-"** ใต้ชื่อเว็บ และชื่อแท็บขึ้นว่า *EcoPink ระบบใหม่*
+> รหัส `eco-xxxxx` ใช้กับระบบเดิมไม่ได้ และรหัสเดิมก็ใช้กับระบบใหม่ไม่ได้
 
 ---
 

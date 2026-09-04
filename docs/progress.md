@@ -43,8 +43,20 @@
 | 2 | ใบแจ้งรหัสไว้พิมพ์แจกครู | ✅ สร้างแล้ว | `npm run handout -- --url https://ที่อยู่จริง/` |
 | 3 | คู่มือครู 1 แผ่น A4 | ✅ เสร็จ | เปิด `docs/teacher-guide.html` แล้ว Ctrl+P |
 | 4 | push ขึ้น GitHub | ✅ เสร็จ 4 ก.ย. | [greengramhouse/waste-bank-3](https://github.com/greengramhouse/waste-bank-3) branch `main` |
-| 4.1 | เปิด GitHub Pages | ⬜ ต้องทำใน repo settings | Settings → Pages → `main` / root |
-| 4.2 | เพิ่ม `greengramhouse.github.io` ใน Firebase authorized domains | ⬜ **ห้ามลืม** ไม่งั้นครูล็อกอินไม่ได้ | Firebase Console → Authentication → Settings |
+| 4.1 | เปิด GitHub Pages | ✅ เสร็จ 4 ก.ย. | https://greengramhouse.github.io/waste-bank-3/ |
+| 4.2 | เพิ่ม `greengramhouse.github.io` ใน Firebase authorized domains | ✅ เสร็จ 4 ก.ย. | ตรวจได้ด้วย identitytoolkit API |
+
+**⚠️ กับดักที่เจอจริงตอนเปิดใช้: ครูเข้าผิดระบบ**
+หน้าแรกของเว็บยังเป็นระบบเดิมบน Google Sheets และ**หน้าล็อกอินหน้าตาเหมือนระบบใหม่ทุกอย่าง**
+(โลโก้ หัวข้อ ช่องกรอก ปุ่ม ชื่อแท็บ) ครูกรอกรหัส `eco-xxxxx` ที่หน้าแรกแล้วเข้าไม่ได้ โดยไม่มีอะไรบอกว่าผิดระบบ
+
+แก้แล้วโดย:
+- `app.html` มีป้าย **"ระบบใหม่ · ใช้รหัสผ่านที่ขึ้นต้นด้วย eco-"** ใต้ชื่อเว็บบนหน้าล็อกอิน
+- ชื่อแท็บของระบบใหม่เป็น *EcoPink ระบบใหม่ — ธนาคารขยะ* ต่างจากระบบเดิม
+- ข้อความตอนล็อกอินไม่ผ่านบอกให้ตรวจว่าที่อยู่ลงท้ายด้วย `/app.html` หรือไม่
+- ใบแจ้งรหัสและคู่มือครูพิมพ์ที่อยู่ **ที่ลงท้ายด้วย `/app.html`**
+
+ป้ายกับข้อความพวกนี้เอาออกได้หลังตัดระบบเสร็จ (`npm run live:new`) เพราะจะเหลือระบบเดียว
 | 5 | จำกัด Browser API key ด้วย HTTP referrer | ⬜ ต้องทำบน [Cloud Console](https://console.cloud.google.com/apis/credentials?project=ecopink) | — |
 | 6 | แขวนป้ายบน `student.html` | ⬜ พร้อมรัน | `npm run notice -- --apply` |
 | 7 | ตัดระบบ (สลับหน้าแรก) | ⬜ ยังไม่ถึงเวลา | `npm run live:new` |
