@@ -3020,6 +3020,12 @@
          * วาดเฉพาะหน้าที่เปิดอยู่ เพราะหน้าที่ซ่อนอยู่จะถูกวาดใหม่ตอน switchTab() อยู่แล้ว
          */
         function renderAllViews() {
+            // วาดผลแล้วแปลว่าหน้าจอตรงกับข้อมูลล่าสุด แถบ "มีรายการใหม่" จึงต้องหายไปด้วย
+            // ไม่งั้นหลังครูกดบันทึกฝากด่วนเสร็จ (ซึ่งล้างช่องที่กรอกไปแล้ว) แถบจะค้างอยู่
+            // ทั้งที่ไม่มีอะไรค้างให้ต้องระวังอีก แล้วครูจะกดแถบซ้ำ ๆ โดยไม่มีอะไรเกิดขึ้น
+            rtPendingUpdate = false;
+            hideStaleDataBar();
+
             const openView = id => document.getElementById(id).classList.contains('hidden') === false;
 
             renderStudentList();
@@ -3101,15 +3107,11 @@
                 showStaleDataBar();
                 return;
             }
-            rtPendingUpdate = false;
-            hideStaleDataBar();
-            renderAllViews();
+            renderAllViews();   // เคลียร์สถานะแถบให้เองแล้ว
         }
 
         /** ครูกดแถบ "มีรายการใหม่" — วาดผลตอนนี้ตามที่ครูสั่ง แม้จะกรอกค้างอยู่ก็ตาม */
         function applyPendingUpdate() {
-            rtPendingUpdate = false;
-            hideStaleDataBar();
             renderAllViews();
         }
 
