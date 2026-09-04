@@ -1780,7 +1780,74 @@
             return list;
         }
 
+        /**
+         * ดึงธุรกรรมตามช่วงวันที่ที่ระบุ — ตัวกลางของทุกหน้าที่ต้องใช้ข้อมูลย้อนหลัง
+         *
+         * หน้าเว็บไม่โหลดธุรกรรมทั้งปีมาค้างไว้แล้ว (ดู docs/realtime-plan.md)
+         * หน้าไหนต้องการข้อมูลย้อนหลังก็ดึงเองตามช่วงที่ผู้ใช้เลือก แล้วเก็บผลไว้ใช้ซ้ำ
+         *
+         * @param {string} start 'YYYY-MM-DD' วันเริ่ม (รวมวันนี้ด้วย)
+         * @param {string} end   'YYYY-MM-DD' วันสุดท้าย
+         */
+        async function fetchTransactionsRange(start, end) {
+            const scope = readScope();
+
+            // ครูต้องมี where('room') เสมอ ไม่งั้น Rules ปฏิเสธทั้ง query
+            // (list rules ตรวจจาก query constraint ไม่ใช่ทีละเอกสาร — ดู CLAUDE.md ข้อ 5)
+            const queries = scope === null
+                ? [db.collection('transactions')
+                    .where('schoolYear', '==', CURRENT_SCHOOL_YEAR)
+                    .where('date', '>=', start).where('date', '<=', end)
+                    .orderBy('date', 'desc').orderBy('createdAt', 'desc').limit(MAX_TX)]
+                : scope.map(r => db.collection('transactions')
+                    .where('schoolYear', '==', CURRENT_SCHOOL_YEAR)
+                    .where('room', '==', r)
+                    .where('date', '>=', start).where('date', '<=', end)
+                    .orderBy('date', 'desc').orderBy('createdAt', 'desc').limit(MAX_TX));
+
+            const snaps = await Promise.all(queries.map(q => q.get()));
+            const list = [];
+            snaps.forEach(s => s.forEach(doc => list.push(toLegacyTx(doc))));
+
+            if (list.length >= MAX_TX) {
+                console.warn(`ช่วง ${start}–${end} มีรายการถึงเพดาน ${MAX_TX} — ลองแบ่งช่วงให้สั้นลง`);
+            }
+
+            list.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0)
+                || ((b.timestamp || 0) - (a.timestamp || 0)));
+            return list;
+        }
+
+        /**
+         * ธุรกรรมทั้งหมดของคนหนึ่งคนในปีการศึกษานี้ — ใช้ในหน้าสรุปรายคน
+         * มี index `memberId ASC, date DESC` รองรับอยู่แล้ว จึงไม่ต้องพึ่งข้อมูลที่โหลดค้างไว้
+         */
+        async function fetchMemberTransactions(memberId) {
+            const snap = await db.collection('transactions')
+                .where('memberId', '==', String(memberId))
+                .orderBy('date', 'desc')
+                .limit(MAX_TX)
+                .get();
+            return snap.docs.map(toLegacyTx);
+        }
+
+        /**
+         * ธุรกรรมที่ต้องมีอยู่ในหน่วยความจำตลอดเวลา = **ของวันนี้เท่านั้น**
+         *
+         * ของเดิมดึงทั้งปีการศึกษา (จำกัด MAX_TX) ทุกครั้งที่ล็อกอินหรือกดรีเฟรช
+         * ซึ่งเป็นการอ่านหลายพันครั้งต่อครั้ง และพอเกิน 5,000 รายการข้อมูลจะขาดเงียบ ๆ
+         * ปีการศึกษาหนึ่งมี ~8,000 รายการจึงชนเพดานแน่นอนกลางปี
+         *
+         * หน้าที่ต้องใช้ข้อมูลย้อนหลังดึงเองตามช่วงที่ผู้ใช้เลือกแทน
+         * (ประวัติ · รายงาน · สรุปห้อง · สรุปครู · สรุปรายคน)
+         */
         async function apiGetTransactions() {
+            const today = todayBangkok();
+            return await fetchTransactionsRange(today, today);
+        }
+
+        /** เก็บไว้เผื่อกรณีที่ต้องดึงทั้งปีจริง ๆ — ตอนนี้ไม่มีใครเรียก */
+        async function apiGetTransactionsWholeYear() {
             const scope = readScope();
             let queries;
 
@@ -1921,8 +1988,10 @@
                     case 'login':             return await apiLogin(payload.username, payload.password);
                     case 'getStudents':       return { status: 'success', students: await apiGetStudents() };
                     case 'getTransactions':   return { status: 'success', data: await apiGetTransactions() };
-                    case 'saveTransaction':   return await apiSaveTransaction(payload.data);
-                    case 'deleteTransaction': return await apiDeleteTransaction(payload.txId);
+                    // ล้างข้อมูลที่ดึงค้างไว้ทุกครั้งที่ธุรกรรมเปลี่ยน ไม่งั้นหน้าสรุปกับรายงาน
+                    // จะยังแสดงชุดเก่าที่ดึงมาก่อนหน้า ทำที่นี่ที่เดียวครอบคลุมทุกจุดที่เรียก
+                    case 'saveTransaction':   clearRangeCaches(); return await apiSaveTransaction(payload.data);
+                    case 'deleteTransaction': clearRangeCaches(); return await apiDeleteTransaction(payload.txId);
                     case 'getWasteTypes':     return await apiGetWasteTypes();
                     case 'saveWasteType':     return await apiSaveWasteType(payload.data);
                     case 'editWasteType':     return await apiEditWasteType(payload.data);
@@ -3225,7 +3294,25 @@
             return refreshData('btnRefreshFastDeposit');
         }
 
-        function renderHistory() {
+        /**
+         * รายการของวันที่ระบุ — วันนี้ใช้ของที่ listener มีอยู่แล้ว วันอื่นค่อยดึง
+         *
+         * เก็บผลของวันที่ดึงมาล่าสุดไว้หนึ่งวัน ครูมักพิมพ์ค้นหาชื่อซ้ำ ๆ ในวันเดิม
+         * ถ้าไม่เก็บไว้จะยิง query ใหม่ทุกตัวอักษรที่พิมพ์
+         */
+        let historyCache = { date: null, rows: [] };
+
+        async function transactionsOfDate(dateStr) {
+            if (dateStr === todayBangkok()) return visibleTransactions();
+            if (historyCache.date === dateStr) return historyCache.rows;
+
+            const rows = await fetchTransactionsRange(dateStr, dateStr);
+            historyCache = { date: dateStr, rows };
+            return rows;
+        }
+
+        async function renderHistory() {
+            const seq = ++renderSeq.history;
             const tbody = document.getElementById('historyTableBody');
             const filterDateStr = document.getElementById('filterDate').value;
             const filterText = document.getElementById('filterText').value.toLowerCase();
@@ -3233,11 +3320,19 @@
             tbody.innerHTML = '';
             let sumP = 0, sumW = 0;
 
-            let filtered = visibleTransactions().filter(t => {
-                let tDate = extractDateString(t.date);
-                const matchDate = tDate === filterDateStr;
+            let dayRows;
+            try {
+                dayRows = await transactionsOfDate(filterDateStr);
+                if (seq !== renderSeq.history) return;   // มีรอบใหม่มาแล้ว ทิ้งผลรอบนี้
+            } catch (err) {
+                console.error('โหลดประวัติไม่สำเร็จ', err);
+                tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-red-500 text-sm">โหลดประวัติไม่สำเร็จ ตรวจสัญญาณอินเทอร์เน็ตแล้วเลือกวันที่ใหม่อีกครั้ง</td></tr>';
+                return;
+            }
+
+            let filtered = dayRows.filter(t => {
                 const matchText = filterText === '' || t.studentName.toLowerCase().includes(filterText) || t.studentId.toString().includes(filterText);
-                return matchDate && matchText;
+                return matchText;
             });
 
             if (filtered.length === 0) {
@@ -3318,7 +3413,59 @@
             renderStudentSummary();
         }
 
-        function renderStudentSummary() {
+        /** ช่วงวันของปีการศึกษา พ.ศ. หนึ่ง ๆ — เปิดเทอมพฤษภาคม ปิดปีการศึกษาเมษายนปีถัดไป */
+        function schoolYearRange(sy) {
+            const y = Number(sy) - 543;
+            return { start: `${y}-05-01`, end: `${y + 1}-04-30` };
+        }
+
+        /**
+         * ธุรกรรมทั้งปีการศึกษา — สำหรับหน้าสรุปรายห้องและสรุปยอดครูที่แสดงยอดรวมทั้งปี
+         *
+         * ดึงตอนเปิดหน้านั้นเท่านั้น ไม่ได้โหลดค้างไว้ตั้งแต่ล็อกอินเหมือนเดิม
+         * ครูที่ไม่เคยเปิดสองหน้านี้จึงไม่ต้องจ่ายค่าอ่านส่วนนี้เลย
+         */
+        let yearTxCache = { key: null, rows: [] };
+
+        async function transactionsThisSchoolYear() {
+            if (yearTxCache.key === CURRENT_SCHOOL_YEAR) return mergeWithToday(yearTxCache.rows);
+
+            const r = schoolYearRange(CURRENT_SCHOOL_YEAR);
+            const rows = await fetchTransactionsRange(r.start, r.end);
+            yearTxCache = { key: CURRENT_SCHOOL_YEAR, rows };
+            return mergeWithToday(rows);
+        }
+
+        /**
+         * แทนที่รายการของวันนี้ในชุดที่ดึงมา ด้วยของสด ๆ จาก listener
+         * ไม่งั้นรายการที่เพิ่งบันทึกเมื่อครู่จะไม่โผล่ในหน้าสรุปจนกว่าจะรีเฟรช
+         */
+        function mergeWithToday(rows) {
+            const today = todayBangkok();
+            return rows.filter(t => extractDateString(t.date) !== today).concat(visibleTransactions());
+        }
+
+        /**
+         * ตัวนับรุ่นของการวาดแต่ละหน้า — กันผลลัพธ์เก่าแซงผลลัพธ์ใหม่
+         *
+         * ฟังก์ชันวาดหน้าเหล่านี้เป็น async แล้ว (ต้องรอ query) ถ้าถูกเรียกซ้อนกัน
+         * เช่นตอนกดสลับแท็บแล้วพิมพ์ค้นหาทันที ทั้งสองรอบจะ append ลงตารางเดียวกัน
+         * ทำให้แถวซ้ำสองเท่า — จดรุ่นไว้ก่อน await แล้วทิ้งผลถ้ามีรอบใหม่มาแล้ว
+         */
+        const renderSeq = { history: 0, student: 0, room: 0, teacher: 0 };
+
+        /** ล้างข้อมูลที่ดึงค้างไว้ — เรียกเมื่อมีการบันทึกหรือลบ เพื่อไม่ให้หน้าสรุปแสดงของเก่า */
+        function clearRangeCaches() {
+            yearTxCache = { key: null, rows: [] };
+            historyCache = { date: null, rows: [] };
+            studentSummaryCache = { id: null, rows: [] };
+        }
+
+        /** ประวัติของคนที่เลือกอยู่ในหน้าสรุปรายคน — ดึงเมื่อเปลี่ยนคน ไม่ดึงซ้ำเมื่อวาดใหม่ */
+        let studentSummaryCache = { id: null, rows: [] };
+
+        async function renderStudentSummary() {
+            const seq = ++renderSeq.student;
             const studentId = document.getElementById('summaryStudentSelect').value;
             const tbody = document.getElementById('studentSummaryTableBody');
 
@@ -3333,7 +3480,24 @@
                 return;
             }
 
-            const studentTx = transactions.filter(t => t.studentId.toString() === studentId);
+            // ดึงประวัติของคนนี้ตรง ๆ ด้วย index memberId แทนการกรองจากข้อมูลที่โหลดค้างไว้
+            // หน้านี้ดูทีละคน จึงอ่านแค่ไม่กี่สิบเอกสาร ไม่ต้องมีธุรกรรมทั้งปีอยู่ในหน่วยความจำ
+            let studentTx;
+            if (studentSummaryCache.id === studentId) {
+                studentTx = studentSummaryCache.rows;
+            } else {
+                tbody.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-vintage-400">กำลังโหลด...</td></tr>';
+                try {
+                    studentTx = await fetchMemberTransactions(studentId);
+                    if (seq !== renderSeq.student) return;
+                    studentSummaryCache = { id: studentId, rows: studentTx };
+                } catch (err) {
+                    console.error('โหลดประวัติรายคนไม่สำเร็จ', err);
+                    tbody.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-red-500">โหลดประวัติไม่สำเร็จ ตรวจสัญญาณอินเทอร์เน็ตแล้วเลือกชื่อใหม่อีกครั้ง</td></tr>';
+                    return;
+                }
+            }
+
             let totalW = 0, totalM = 0, totalP = 0;
             let runningM = 0, runningP = 0;
             const dateMap = {};
@@ -3519,7 +3683,8 @@
             renderRoomSummary();
         }
 
-        function renderRoomSummary() {
+        async function renderRoomSummary() {
+            const seq = ++renderSeq.room;
             let totalW = 0, totalM = 0, totalP = 0;
             const dateMap = {};
             const topStudentsMap = {}; // ตัวแปรสำหรับเก็บยอดรวมรายคน
@@ -3529,8 +3694,21 @@
             const select = document.getElementById('summaryRoomSelect');
             const selectedRoom = currentRole === 'admin' ? select.value : currentUser.room;
 
+            // ดึงธุรกรรมทั้งปีตอนเปิดหน้านี้ ไม่ได้โหลดค้างไว้ตั้งแต่ล็อกอิน
+            let yearTx;
+            try {
+                tbody.innerHTML = '<tr><td colspan="4" class="py-6 text-center text-vintage-400">กำลังโหลด...</td></tr>';
+                yearTx = await transactionsThisSchoolYear();
+                if (seq !== renderSeq.room) return;
+                tbody.innerHTML = '';
+            } catch (err) {
+                console.error('โหลดสรุปรายห้องไม่สำเร็จ', err);
+                tbody.innerHTML = '<tr><td colspan="4" class="py-6 text-center text-red-500">โหลดข้อมูลไม่สำเร็จ ตรวจสัญญาณอินเทอร์เน็ตแล้วกดรีเฟรช</td></tr>';
+                return;
+            }
+
             // กรองข้อมูลตามห้องที่เลือก (ไม่เอาครู)
-            let filteredTx = transactions.filter(t => {
+            let filteredTx = yearTx.filter(t => {
                 const s = students.find(st => st.id == t.studentId);
                 return !(s && s.isTeacher);
             });
@@ -3689,15 +3867,28 @@
         }
 
         let teacherChart = null;
-        function renderTeacherSummary() {
+        async function renderTeacherSummary() {
+            const seq = ++renderSeq.teacher;
             let totalW = 0, totalM = 0, totalP = 0;
             const dateMap = {};
-            const topTeachersMap = {}; 
+            const topTeachersMap = {};
             const tbody = document.getElementById('teacherSummaryTableBody');
             tbody.innerHTML = '';
 
+            let yearTx;
+            try {
+                tbody.innerHTML = '<tr><td colspan="4" class="py-6 text-center text-vintage-400">กำลังโหลด...</td></tr>';
+                yearTx = await transactionsThisSchoolYear();
+                if (seq !== renderSeq.teacher) return;
+                tbody.innerHTML = '';
+            } catch (err) {
+                console.error('โหลดสรุปยอดครูไม่สำเร็จ', err);
+                tbody.innerHTML = '<tr><td colspan="4" class="py-6 text-center text-red-500">โหลดข้อมูลไม่สำเร็จ ตรวจสัญญาณอินเทอร์เน็ตแล้วกดรีเฟรช</td></tr>';
+                return;
+            }
+
             // กรองเฉพาะครู
-            let filteredTx = transactions.filter(t => {
+            let filteredTx = yearTx.filter(t => {
                 const s = students.find(st => st.id == t.studentId);
                 return s && s.isTeacher;
             });
@@ -3981,7 +4172,7 @@
                 }
             });
         }
-        function generateReport() {
+        async function generateReport() {
             const startDateStr = document.getElementById('reportStartDate').value;
             const endDateStr = document.getElementById('reportEndDate').value;
 
@@ -3989,13 +4180,31 @@
                 Swal.fire({ icon: 'warning', title: 'กรุณาเลือกช่วงวันที่', confirmButtonColor: '#16a34a' });
                 return;
             }
+            if (startDateStr > endDateStr) {
+                Swal.fire({ icon: 'warning', title: 'ช่วงวันที่ไม่ถูกต้อง', text: 'วันเริ่มต้นต้องมาก่อนวันสิ้นสุด', confirmButtonColor: '#16a34a' });
+                return;
+            }
 
+            // ดึงเฉพาะช่วงที่ครูเลือก แทนการกรองจากธุรกรรมทั้งปีที่เคยโหลดค้างไว้
             // เทียบวันที่เป็น string ตรง ๆ — ISO 'YYYY-MM-DD' เรียงตามตัวอักษรถูกอยู่แล้ว
-            // ห้ามใช้ new Date(startDateStr) เพราะพาร์สเป็น UTC เที่ยงคืน ไม่ใช่เวลาไทย
-            const filteredTx = visibleTransactions().filter(t => {
-                const d = extractDateString(t.date);
-                return d >= startDateStr && d <= endDateStr;
-            });
+            const btn = document.getElementById('generateReportBtn');
+            const btnHtml = btn ? btn.innerHTML : '';
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-hourglass-half fa-spin"></i> กำลังโหลด...'; }
+
+            let filteredTx;
+            try {
+                filteredTx = mergeWithToday(await fetchTransactionsRange(startDateStr, endDateStr))
+                    .filter(t => {
+                        const d = extractDateString(t.date);
+                        return d >= startDateStr && d <= endDateStr;
+                    });
+            } catch (err) {
+                console.error('ออกรายงานไม่สำเร็จ', err);
+                Swal.fire({ icon: 'error', title: 'โหลดข้อมูลไม่สำเร็จ', text: 'ตรวจสัญญาณอินเทอร์เน็ตแล้วกดดูรายงานอีกครั้ง', confirmButtonColor: '#16a34a' });
+                return;
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = btnHtml; }
+            }
 
             let uniqueDatesSet = new Set();
             filteredTx.forEach(t => uniqueDatesSet.add(extractDateString(t.date)));
