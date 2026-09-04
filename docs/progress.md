@@ -14,7 +14,7 @@
 | 3 | อะแดปเตอร์ Firestore ใน `app.html` | ✅ เสร็จ |
 | 4 | ปรับ UI + รองรับมือถือ | ✅ เสร็จ |
 | 5 | ทดสอบ | ✅ ผ่าน 38/38 + ไล่ทุกแท็บบนเบราว์เซอร์ |
-| **6** | **Deploy ขึ้น GitHub Pages + ตัดระบบ** | ⬜ **ยังไม่เริ่ม — งานถัดไป** |
+| **6** | **Deploy ขึ้น GitHub Pages + ตัดระบบ** | 🟡 **กำลังทำ — เตรียมของครบแล้ว เหลือ push จริง** |
 
 ---
 
@@ -25,7 +25,9 @@
 `transactions` 0 และ `deletedTransactions` 0 — **ฐานสะอาด ไม่มีข้อมูลทดสอบค้าง**
 
 **Firebase Auth** — 18 บัญชี (ครู 15 + แอดมิน 3) พร้อม custom claims `role` / `rooms` / `canViewAll`
-ล็อกอินด้วย username เดิม เช่น `Sn`, `Sb`, `ac` — รหัสเริ่มต้น `ecopink2569` ทุกคน
+ล็อกอินด้วย username เดิม เช่น `Sn`, `Sb`, `ac`
+**รหัสผ่านตั้งใหม่แล้วเมื่อ 4 ก.ย. 2569 เป็นรหัสสุ่มรายคนรูปแบบ `eco-xxxxx`**
+รหัส `ecopink2569` ที่เคยใช้ร่วมกันทุกบัญชีใช้ไม่ได้แล้ว — ดูรหัสจริงใน `tools/accounts.json` (อยู่ใน .gitignore)
 
 **`app.html`** — ระบบใหม่ทำงานครบทุกแท็บ ทดสอบบนเบราว์เซอร์จริงแล้ว
 
@@ -33,17 +35,28 @@
 
 ## เฟส 6 ต้องทำอะไรบ้าง
 
-1. **จำกัด Browser API key ด้วย HTTP referrer** ใน [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials?project=ecopink)
-   ตอนนี้ยังเปิดกว้าง — Rules กันข้อมูลได้ แต่กันคนเอา key ไปยิงจนโควต้าหมดไม่ได้
-2. **Deploy `app.html` ขึ้น GitHub Pages** แล้วให้ครูทดลองใช้คู่ขนานกับของเดิมสัก 1–2 สัปดาห์
-3. **แจ้งรหัสผ่านใหม่ให้ครูทุกคน** — รหัส `1234` เดิมใช้ไม่ได้แล้ว (Firebase บังคับ ≥ 6 ตัวอักษร)
-   ครูห้องที่เคยใช้บัญชีร่วมกันตอนนี้แยกเป็นคนละบัญชี ดูตารางใน `tools/accounts.json`
-4. **ปิดหรือแขวนป้าย `student.html`** — ยังชี้ Google Sheets เดิม พอครูเริ่มบันทึกใน Firestore
-   นักเรียนจะไม่เห็นรายการใหม่และแต้มจะไม่ขยับ
-5. **สลับชื่อไฟล์ตอนตัดระบบจริง** — `index.html` → `index-sheets.html.bak`, `app.html` → `index.html`
-   (GitHub Pages เสิร์ฟ `index.html` ที่ root เป็นหน้าแรก)
-6. **อย่าเพิ่งลบ deployment ของ Apps Script** เก็บไว้ย้อนกลับได้ 1–2 สัปดาห์แรก
+เครื่องมือทุกตัวเตรียมไว้แล้ว รันได้เลย — ที่เหลือคือการตัดสินใจว่าจะตัดระบบเมื่อไหร่
+
+| # | งาน | สถานะ | คำสั่ง |
+|---|---|---|---|
+| 1 | ตั้งรหัสผ่านใหม่รายคน | ✅ เสร็จ 4 ก.ย. | `npm run set-passwords -- --apply` |
+| 2 | ใบแจ้งรหัสไว้พิมพ์แจกครู | ✅ สร้างแล้ว | `npm run handout -- --url https://ที่อยู่จริง/` |
+| 3 | คู่มือครู 1 แผ่น A4 | ✅ เสร็จ | เปิด `docs/teacher-guide.html` แล้ว Ctrl+P |
+| 4 | git repo ในเครื่อง | ✅ commit แล้ว | เหลือต่อ remote แล้ว push |
+| 5 | จำกัด Browser API key ด้วย HTTP referrer | ⬜ ต้องทำบน [Cloud Console](https://console.cloud.google.com/apis/credentials?project=ecopink) | — |
+| 6 | แขวนป้ายบน `student.html` | ⬜ พร้อมรัน | `npm run notice -- --apply` |
+| 7 | ตัดระบบ (สลับหน้าแรก) | ⬜ ยังไม่ถึงเวลา | `npm run live:new` |
+
+**ลำดับที่แนะนำ** — ทดลองใช้คู่ขนาน 1–2 สัปดาห์ก่อนตัดจริง
+1. push ขึ้น GitHub Pages แล้วให้ครูเข้าที่ `/app.html` (หน้าแรกยังเป็นระบบเดิม)
+2. แจกใบรหัส + คู่มือ แล้วให้ครูลองบันทึกจริงคู่ขนานกับของเดิม
+3. ครบสองสัปดาห์แล้วค่อย `npm run notice -- --apply` และ `npm run live:new`
+4. **อย่าเพิ่งลบ deployment ของ Apps Script** เก็บไว้ย้อนกลับได้ 1–2 สัปดาห์แรก
    ตั้งชีต Google Sheets เป็น read-only ไว้เป็น backup
+
+**ถ้าระบบใหม่มีปัญหา** ย้อนกลับด้วย `npm run live:old` แล้ว push — หน้าแรกกลับไปเป็นระบบเดิมทันที
+ธุรกรรมที่บันทึกไว้ใน Firestore ยังอยู่ครบ ไม่หายไปไหน
+
 
 ---
 
@@ -64,6 +77,12 @@ npm run test:rules   # ทดสอบสิทธิ์ 38 ข้อกับ�
 npm run verify       # ตรวจความครบถ้วนของข้อมูล
 npm run balances     # คำนวณยอดคงเหลือใหม่จากธุรกรรมจริง (ใส่ --check เพื่อดูเฉย ๆ)
 npm run deploy:rules # ติดตั้ง Rules + indexes ใหม่หลังแก้
+
+npm run set-passwords          # ดูรหัสที่จะสุ่ม (ใส่ -- --apply เพื่อตั้งจริง)
+npm run handout                # สร้างใบแจ้งรหัสไว้พิมพ์แจก (docs/handout-passwords.html)
+npm run notice                 # ดูป้ายที่จะแปะบน student.html (ใส่ -- --apply เพื่อแปะจริง)
+npm run live                   # ดูว่าหน้าแรกของเว็บตอนนี้เป็นระบบไหน
+npm run live:new / live:old    # สลับหน้าแรกไประบบใหม่ / ย้อนกลับระบบเดิม
 ```
 
 **ข้อควรระวังของเครื่องนี้**

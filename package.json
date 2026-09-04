@@ -16,7 +16,11 @@
     "test:rules": "node tools/test-rules.mjs",
     "balances": "node tools/recompute-balances.mjs",
     "set-passwords": "node tools/set-passwords.mjs",
-    "handout": "node tools/make-handout.mjs"
+    "handout": "node tools/make-handout.mjs",
+    "live": "node tools/switch-live.mjs",
+    "live:new": "node tools/switch-live.mjs firestore",
+    "live:old": "node tools/switch-live.mjs sheets",
+    "notice": "node tools/add-student-notice.mjs"
   },
   "dependencies": {
     "firebase-admin": "^13.0.2"
