@@ -1,0 +1,20 @@
+# ความลับ — ห้ามขึ้น GitHub เด็ดขาด (repo นี้เป็น public)
+tools/service-account.json
+*-service-account.json
+.env
+
+# มีรหัสผ่านจริงของครูทุกคน — ถ้าหลุดขึ้น repo สาธารณะต้องรีเซ็ตรหัสใหม่ทุกบัญชี
+tools/accounts.json
+
+# ใบแจ้งรหัสไว้พิมพ์แจก สร้างใหม่ได้จาก `npm run handout`
+docs/handout*.html
+
+# ข้อมูลที่ดึงจากชีต มีชื่อ-นามสกุลนักเรียนจริง
+tools/data/
+
+node_modules/
+npm-debug.log*
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*

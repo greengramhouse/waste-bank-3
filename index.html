@@ -1,0 +1,3487 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EcoPink ธนาคารขยะ</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- pdfMake -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+
+    <!-- Google Fonts (Sarabun & Charm for Vintage Feel) -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Charm:wght@400;700&family=Sarabun:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Sarabun', 'sans-serif'],
+                        vintage: ['Charm', 'cursive'],
+                    },
+                    colors: {
+                        vintage: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            300: '#86efac',
+                            400: '#4ade80',
+                            500: '#22c55e', /* Green */
+                            600: '#16a34a',
+                            700: '#15803d', /* Dark Green */
+                            800: '#166534',
+                            900: '#14532d', /* Very Dark Green */
+                        },
+                        gold: {
+                            300: '#e6c887',
+                            500: '#c5a059', /* Antique Gold */
+                            600: '#a88645'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            /* Eco Green gradient background */
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            min-height: 100vh;
+            color: #14532d;
+            touch-action: pan-x pan-y;
+        }
+
+        h1,
+        h2,
+        h3,
+        .vintage-title {
+            font-family: 'Charm', cursive;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(197, 160, 89, 0.2);
+            box-shadow: 0 4px 20px rgba(20, 83, 45, 0.05);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Elegant scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #86efac;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #22c55e;
+        }
+
+        .radio-card:checked+div {
+            border-color: #16a34a;
+            background-color: #f0fdf4;
+            transform: scale(1.02);
+            box-shadow: 0 4px 10px rgba(22, 163, 74, 0.15);
+        }
+    </style>
+</head>
+
+<body class="antialiased selection:bg-vintage-200 selection:text-vintage-900">
+
+    <!-- ================= L O G I N   V I E W ================= -->
+    <div id="loginView" class="min-h-screen flex items-center justify-center p-4 fade-in">
+        <div class="glass-card rounded-2xl w-full max-w-md p-10 relative overflow-hidden">
+            <!-- Vintage Decor elements -->
+            <div class="absolute -top-12 -right-12 w-40 h-40 border-[1px] border-gold-300 rounded-full opacity-30">
+            </div>
+            <div class="absolute -bottom-12 -left-12 w-40 h-40 border-[1px] border-vintage-400 rounded-full opacity-30">
+            </div>
+
+            <div class="text-center relative z-10 mb-8">
+                <div class="inline-flex items-center justify-center w-32 h-32 overflow-hidden">
+                    <img src="https://res.cloudinary.com/gukkghu/image/upload/v1646575846/gukkghu/%E0%B8%87%E0%B8%B2%E0%B8%99%E0%B8%AD%E0%B8%AD%E0%B8%81%E0%B9%81%E0%B8%9A%E0%B8%9A%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B9%84%E0%B8%A1%E0%B9%88%E0%B8%A1%E0%B8%B5%E0%B8%8A%E0%B8%B7%E0%B9%88%E0%B8%AD_aytvpq.png"
+                        alt="EcoPink Logo"
+                        class="w-full h-full object-contain p-2 transition-transform duration-300 hover:scale-105">
+                </div>
+                <h1 class="text-4xl font-bold text-vintage-800 tracking-wide">ธนาคารขยะรักษ์โลก</h1>
+                <p class="text-sm text-vintage-600 mt-2 font-medium">โรงเรียนชุมชนวัดไทยงาม</p>
+            </div>
+
+            <form id="loginForm" class="space-y-6 relative z-10" onsubmit="event.preventDefault(); doLogin();">
+                <div>
+                    <label class="block text-sm font-medium text-vintage-800 mb-1 ml-1">ชื่อผู้ใช้งาน</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-user text-gold-500"></i>
+                        </div>
+                        <input type="text" id="username" required
+                            class="w-full pl-10 pr-4 py-3 rounded-xl border border-vintage-200 focus:border-vintage-500 focus:ring-1 focus:ring-vintage-500 outline-none transition bg-white/60 focus:bg-white text-vintage-900 shadow-inner"
+                            placeholder="Username">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-vintage-800 mb-1 ml-1">รหัสผ่าน</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-lock text-gold-500"></i>
+                        </div>
+                        <input type="password" id="password" required
+                            class="w-full pl-10 pr-4 py-3 rounded-xl border border-vintage-200 focus:border-vintage-500 focus:ring-1 focus:ring-vintage-500 outline-none transition bg-white/60 focus:bg-white text-vintage-900 shadow-inner"
+                            placeholder="••••••••">
+                    </div>
+                </div>
+
+                <button type="submit" id="loginBtn"
+                    class="w-full py-3 px-4 bg-gradient-to-r from-vintage-700 to-vintage-600 text-white font-medium rounded-xl hover:shadow-lg hover:from-vintage-800 hover:to-vintage-700 transition duration-300 flex justify-center items-center gap-2 border border-vintage-900">
+                    <span>เข้าสู่ระบบ</span>
+                    <i class="fa-solid fa-key"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= M A I N   A P P   V I E W ================= -->
+    <div id="mainAppView" class="hidden min-h-screen flex flex-col">
+
+        <!-- Navbar -->
+        <nav class="bg-white/90 backdrop-blur-md sticky top-0 z-50 shadow-sm border-b border-vintage-200">
+            <div class="max-w-6xl mx-auto px-4">
+                <div class="flex justify-between h-16 items-center">
+                    <div class="flex items-center gap-3 text-vintage-700">
+                        <img src="https://res.cloudinary.com/gukkghu/image/upload/v1646575846/gukkghu/%E0%B8%87%E0%B8%B2%E0%B8%99%E0%B8%AD%E0%B8%AD%E0%B8%81%E0%B9%81%E0%B8%9A%E0%B8%9A%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B9%84%E0%B8%A1%E0%B9%88%E0%B8%A1%E0%B8%B5%E0%B8%8A%E0%B8%B7%E0%B9%88%E0%B8%AD_aytvpq.png"
+                            alt="EcoPink Logo" class="w-20 p-0.5">
+                        <span class="vintage-title font-bold text-2xl tracking-wide">EcoPink Bank</span>
+                    </div>
+
+                    <div class="flex items-center gap-4">
+                        <div class="hidden sm:block text-right">
+                            <div class="text-sm font-medium text-vintage-900" id="displayTeacherName">ชื่อ-สกุล ครู
+                            </div>
+                            <div class="text-xs text-vintage-600" id="displayTeacherRoom">ที่ปรึกษา ห้อง</div>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-vintage-100 flex items-center justify-center text-vintage-700 border border-vintage-300 cursor-pointer hover:bg-vintage-200 transition shadow-sm"
+                            onclick="logout()">
+                            <i class="fa-solid fa-door-open"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Menu Tabs -->
+            <div class="max-w-6xl mx-auto px-4 overflow-x-auto hide-scrollbar border-t border-vintage-100 mt-1">
+                <div class="flex space-x-6 pt-1">
+                    <button onclick="switchTab('deposit')" id="tab-deposit"
+                        class="tab-btn pb-3 pt-2 border-b-2 border-vintage-600 text-vintage-700 font-medium whitespace-nowrap px-2 transition">
+                        <i class="fa-solid fa-balance-scale mr-1"></i> รับฝากขยะ
+                    </button>
+                    <button onclick="switchTab('fast-deposit')" id="tab-fast-deposit"
+                        class="tab-btn pb-3 pt-2 border-b-2 border-transparent text-gray-400 hover:text-vintage-600 font-medium whitespace-nowrap px-2 transition">
+                        <i class="fa-solid fa-bolt mr-1"></i> รับฝากด่วน
+                    </button>
+                    <button onclick="switchTab('withdraw')" id="tab-withdraw"
+                        class="tab-btn pb-3 pt-2 border-b-2 border-transparent text-gray-400 hover:text-vintage-600 font-medium whitespace-nowrap px-2 transition hidden">
+                        <i class="fa-solid fa-money-bill-transfer mr-1"></i> ถอนเงิน
+                    </button>
+                    <button onclick="switchTab('history')" id="tab-history"
+                        class="tab-btn pb-3 pt-2 border-b-2 border-transparent text-gray-400 hover:text-vintage-600 font-medium whitespace-nowrap px-2 transition">
+                        <i class="fa-solid fa-book-journal-whills mr-1"></i> ประวัติรับซื้อ
+                    </button>
+                    <button onclick="switchTab('balance-search')" id="tab-balance-search"
+                        class="tab-btn pb-3 pt-2 border-b-2 border-transparent text-gray-400 hover:text-vintage-600 font-medium whitespace-nowrap px-2 transition">
+                        <i class="fa-solid fa-magnifying-glass-dollar mr-1"></i> ค้นหายอดรายคน
+                    </button>
+                    <button onclick="switchTab('summary-student')" id="tab-summary-student"
+                        class="tab-btn pb-3 pt-2 border-b-2 border-transparent text-gray-400 hover:text-vintage-600 font-medium whitespace-nowrap px-2 transition">
+                        <i class="fa-solid fa-user-tie mr-1"></i> สรุปรายคน
+                    </button>
+                    <button onclick="switchTab('summary-room')" id="tab-summary-room"
+                        class="tab-btn pb-3 pt-2 border-b-2 border-transparent text-gray-400 hover:text-vintage-600 font-medium whitespace-nowrap px-2 transition">
+                        <i class="fa-solid fa-landmark mr-1"></i> สรุปรายห้อง
+                    </button>
+                    <button onclick="switchTab('summary-teacher')" id="tab-summary-teacher"
+                        class="tab-btn pb-3 pt-2 border-b-2 border-transparent text-gray-400 hover:text-vintage-600 font-medium whitespace-nowrap px-2 transition">
+                        <i class="fa-solid fa-chalkboard-user mr-1"></i> สรุปยอดครู
+                    </button>
+                    <button onclick="switchTab('report')" id="tab-report"
+                        class="tab-btn pb-3 pt-2 border-b-2 border-transparent text-gray-400 hover:text-vintage-600 font-medium whitespace-nowrap px-2 transition">
+                        <i class="fa-solid fa-file-invoice mr-1"></i> รายงานประจำเดือน
+                    </button>
+                    <!-- ส่วนที่เคยแหว่งหายไป คือปุ่มตั้งค่านี้ครับ -->
+                    <button onclick="switchTab('settings')" id="tab-settings"
+                        class="tab-btn pb-3 pt-2 border-b-2 border-transparent text-gray-400 hover:text-vintage-600 font-medium whitespace-nowrap px-2 transition hidden">
+                        <i class="fa-solid fa-cogs mr-1"></i> ตั้งค่าระบบ
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="flex-grow max-w-6xl mx-auto w-full p-4 sm:p-6 fade-in">
+
+            <!-- ===== TAB: DEPOSIT ===== -->
+            <div id="view-deposit" class="content-view block">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                    <!-- Left: Search Student List (Accordion) -->
+                    <div class="lg:col-span-1 flex flex-col gap-4" style="max-height: calc(100vh - 9rem);">
+                        <div class="glass-card rounded-xl p-5 flex flex-col h-full overflow-hidden">
+                            <div class="flex items-center justify-between gap-2 mb-4 shrink-0">
+                                <h2 class="text-xl font-bold text-vintage-800 flex items-center gap-2">
+                                    <i class="fa-solid fa-users text-gold-500 text-lg"></i> รายชื่อนักเรียน/ครู
+                                </h2>
+                                <button onclick="refreshDepositData()" id="btnRefreshDeposit"
+                                    class="px-2.5 py-1.5 bg-vintage-100 hover:bg-vintage-200 border border-vintage-200 text-vintage-700 rounded-lg transition-colors flex items-center justify-center shrink-0"
+                                    title="โหลดรายชื่อและยอดสะสมใหม่ (ไม่ต้องออกจากระบบ)">
+                                    <i class="fa-solid fa-rotate-right text-sm"></i>
+                                </button>
+                            </div>
+
+                            <div class="relative mb-4 shrink-0">
+                                <input type="text" id="searchStudent"
+                                    class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-vintage-200 focus:border-vintage-500 focus:ring-1 focus:ring-vintage-500 outline-none text-sm bg-white"
+                                    placeholder="ค้นหารหัส หรือ ชื่อ..." oninput="renderStudentList()">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fa-solid fa-search text-vintage-400"></i>
+                                </div>
+                            </div>
+
+                            <!-- Selected Student Card -->
+                            <div id="selectedStudentCard"
+                                class="hidden bg-gradient-to-r from-vintage-100 to-white rounded-lg p-4 border border-gold-300 mb-4 shrink-0 shadow-sm">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="text-xs font-semibold text-vintage-700 flex items-center gap-1"><i
+                                            class="fa-solid fa-thumbtack text-gold-500"></i> เลือกนักเรียนแล้ว</div>
+                                    <button onclick="resetSelectedStudent()"
+                                        class="text-vintage-400 hover:text-red-500 text-xs transition"><i
+                                            class="fa-solid fa-times"></i> ยกเลิก</button>
+                                </div>
+                                <div class="flex items-start gap-3">
+                                    <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-vintage-700 font-bold text-xl shadow-sm border border-vintage-200"
+                                        id="studentInitials">-</div>
+                                    <div>
+                                        <div class="text-xs text-vintage-600 font-medium mb-0.5" id="studentIdDisplay">
+                                            รหัส: -</div>
+                                        <div class="font-semibold text-vintage-900 leading-tight"
+                                            id="studentNameDisplay">ชื่อ - นามสกุล</div>
+                                        <div class="text-xs text-vintage-500 mt-1" id="studentRoomDisplay"><i
+                                                class="fa-solid fa-school text-gold-500"></i> ห้อง -</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Accordion List -->
+                            <div id="studentListContainer" class="flex-grow overflow-y-auto pr-2 space-y-2 pb-2">
+                                <!-- Students will be injected here -->
+                                <div class="text-center text-vintage-400 text-sm py-4">กำลังโหลดรายชื่อ...</div>
+                            </div>
+
+                            <!-- Pagination Controls -->
+                            <div id="paginationControls"
+                                class="hidden flex justify-between items-center pt-3 mt-2 border-t border-vintage-100 shrink-0">
+                                <button onclick="prevPage()" id="btnPrev"
+                                    class="px-3 py-1.5 text-xs font-medium text-vintage-600 bg-vintage-100 rounded hover:bg-vintage-200 transition disabled:opacity-50 disabled:cursor-not-allowed border border-vintage-200">
+                                    <i class="fa-solid fa-chevron-left"></i> ก่อนหน้า
+                                </button>
+                                <span id="pageIndicator" class="text-xs text-vintage-500 font-medium">หน้า 1 / 1</span>
+                                <button onclick="nextPage()" id="btnNext"
+                                    class="px-3 py-1.5 text-xs font-medium text-vintage-600 bg-vintage-100 rounded hover:bg-vintage-200 transition disabled:opacity-50 disabled:cursor-not-allowed border border-vintage-200">
+                                    ถัดไป <i class="fa-solid fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Calculator & Form -->
+                    <div class="lg:col-span-2">
+                        <div class="glass-card rounded-xl p-6 sm:p-8">
+                            <div
+                                class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                                <h2 class="text-2xl font-bold text-vintage-800 flex items-center gap-2 vintage-title">
+                                    <i class="fa-solid fa-scale-unbalanced text-gold-500"></i> บันทึกชั่งน้ำหนัก
+                                </h2>
+                                <input type="date" id="depositDate"
+                                    class="text-sm border border-vintage-200 rounded-lg px-4 py-2 text-vintage-800 focus:outline-none focus:border-vintage-500 bg-white shadow-inner">
+                            </div>
+
+                            <!-- Waste Type Selector -->
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-vintage-800 mb-3">เลือกประเภทขยะ</label>
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="wasteTypeContainer">
+                                    <!-- Types will be injected here -->
+                                    <div class="text-center text-vintage-400 text-sm py-4 col-span-full">
+                                        กำลังโหลดประเภทขยะ...</div>
+                                </div>
+                            </div>
+
+                            <!-- Weight Input -->
+                            <div class="mb-8">
+                                <label class="block text-sm font-medium text-vintage-800 mb-3">น้ำหนักสุทธิ</label>
+                                <div class="relative">
+                                    <input type="number" id="weightInput" step="0.01"
+                                        class="w-full text-center text-4xl font-bold text-vintage-700 py-6 rounded-xl border border-vintage-300 focus:border-vintage-600 outline-none transition bg-white shadow-inner"
+                                        placeholder="0.00" oninput="calculateTotal()">
+                                    <div class="absolute inset-y-0 right-0 pr-6 flex items-center pointer-events-none">
+                                        <span class="text-vintage-500 font-medium">กิโลกรัม</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Summary Box (Vintage Style) -->
+                            <div
+                                class="bg-gradient-to-r from-vintage-800 to-vintage-600 rounded-xl p-6 text-white shadow-lg mb-8 flex justify-between items-center border border-vintage-900 relative overflow-hidden">
+                                <div
+                                    class="absolute top-0 right-0 w-32 h-32 bg-gold-500 rounded-full mix-blend-overlay filter blur-2xl opacity-20">
+                                </div>
+                                <div class="relative z-10">
+                                    <div class="text-vintage-100 text-sm mb-1 font-light">ยอดเงินที่ได้รับ</div>
+                                    <div class="text-4xl font-bold font-serif"><span id="totalPriceDisplay">0.00</span>
+                                        <span class="text-lg font-sans font-normal">บาท</span>
+                                    </div>
+                                </div>
+                                <div class="relative z-10 text-right border-l border-white/20 pl-6">
+                                    <div class="text-vintage-100 text-sm mb-1 font-light">แต้มสะสม</div>
+                                    <div class="text-3xl font-bold font-serif"><span id="totalPointsDisplay">0</span> <i
+                                            class="fa-solid fa-star text-gold-300 text-lg"></i></div>
+                                </div>
+                            </div>
+
+                            <button onclick="submitDeposit()"
+                                class="w-full py-4 bg-vintage-900 text-gold-300 font-medium text-lg rounded-xl hover:bg-vintage-800 hover:text-gold-100 transition duration-300 shadow-md flex justify-center items-center gap-3 border border-vintage-700">
+                                <i class="fa-solid fa-stamp"></i> บันทึกรายการ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TAB: FAST DEPOSIT ===== -->
+            <div id="view-fast-deposit" class="content-view hidden">
+                <div class="glass-card rounded-xl p-6 shadow-sm mb-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <h2 class="text-xl font-bold text-vintage-800 flex items-center gap-2 vintage-title">
+                            <i class="fa-solid fa-bolt text-gold-500"></i> รับฝากด่วน
+                        </h2>
+                        <button onclick="refreshFastDepositData()" id="btnRefreshFastDeposit"
+                            class="px-3 py-2 bg-vintage-100 hover:bg-vintage-200 border border-vintage-200 text-vintage-700 rounded-lg transition-colors flex items-center justify-center shrink-0"
+                            title="โหลดรายชื่อและยอดสะสมใหม่ (ไม่ต้องออกจากระบบ)">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-vintage-700 mb-1">วันที่รับฝาก</label>
+                            <input type="date" id="fastDepositDate"
+                                class="w-full px-4 py-2 border border-vintage-300 rounded-lg focus:border-vintage-600 outline-none text-sm bg-white shadow-inner">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-vintage-700 mb-1">ค้นหารายชื่อ</label>
+                            <div class="relative">
+                                <input type="text" id="searchFastDeposit"
+                                    class="w-full pl-10 pr-4 py-2 border border-vintage-300 rounded-lg focus:border-vintage-600 outline-none text-sm bg-white shadow-inner"
+                                    placeholder="ค้นหารหัส หรือ ชื่อ..." oninput="renderFastDepositTable()">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fa-solid fa-search text-vintage-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-lg border border-vintage-200 shadow-sm bg-white min-h-[400px]">
+                        <table class="w-full text-left border-collapse min-w-[800px]">
+                            <thead>
+                                <tr class="bg-vintage-100 text-vintage-800 text-xs border-b border-vintage-200">
+                                    <th class="py-3 px-4 font-semibold w-20 text-center">รหัส</th>
+                                    <th class="py-3 px-4 font-semibold w-48">ชื่อ - นามสกุล</th>
+                                    <th class="py-3 px-4 font-semibold w-40">ประเภทขยะ</th>
+                                    <th class="py-3 px-4 font-semibold w-24 text-right">น้ำหนัก (กก.)</th>
+                                    <th class="py-3 px-4 font-semibold w-24 text-right">ยอดเงิน (บาท)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fastDepositTableBody" class="text-sm divide-y divide-vintage-100">
+                                <tr>
+                                    <td colspan="5" class="py-6 text-center text-vintage-400">กำลังโหลดข้อมูล...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="p-4 border-t border-vintage-200 bg-vintage-50 flex justify-end">
+                            <button onclick="submitAllFastDeposit()" id="btnSubmitAllFastDeposit" class="px-6 py-2.5 bg-vintage-700 text-gold-300 rounded-lg hover:bg-vintage-800 transition shadow-md font-medium flex items-center gap-2">
+                                <i class="fa-solid fa-save"></i> บันทึกข้อมูลทั้งหมด
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TAB: WITHDRAW ===== -->
+            <div id="view-withdraw" class="content-view hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                    <!-- Left: Search Student List -->
+                    <div class="lg:col-span-1 flex flex-col gap-4" style="max-h: calc(100vh - 9rem);">
+                        <div class="glass-card rounded-xl p-5 flex flex-col h-full overflow-hidden">
+                            <h2 class="text-xl font-bold text-vintage-800 mb-4 flex items-center gap-2 shrink-0">
+                                <i class="fa-solid fa-users text-gold-500 text-lg"></i> เลือกนักเรียนที่ถอนเงิน
+                            </h2>
+
+                            <div class="relative mb-4 shrink-0">
+                                <input type="text" id="searchWithdrawStudent"
+                                    class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-vintage-200 focus:border-vintage-500 focus:ring-1 focus:ring-vintage-500 outline-none text-sm bg-white"
+                                    placeholder="ค้นหารหัส หรือ ชื่อนักเรียน..." oninput="renderWithdrawStudentList()">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fa-solid fa-search text-vintage-400"></i>
+                                </div>
+                            </div>
+
+                            <!-- Selected Student Card -->
+                            <div id="withdrawSelectedStudentCard"
+                                class="hidden bg-gradient-to-r from-vintage-100 to-white rounded-lg p-4 border border-gold-300 mb-4 shrink-0 shadow-sm">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="text-xs font-semibold text-vintage-700 flex items-center gap-1"><i
+                                            class="fa-solid fa-thumbtack text-gold-500"></i> เลือกนักเรียนแล้ว</div>
+                                    <button onclick="resetWithdrawSelectedStudent()"
+                                        class="text-vintage-400 hover:text-red-500 text-xs transition"><i
+                                            class="fa-solid fa-times"></i> ยกเลิก</button>
+                                </div>
+                                <div class="flex items-start gap-3">
+                                    <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-vintage-700 font-bold text-xl shadow-sm border border-vintage-200"
+                                        id="withdrawStudentInitials">-</div>
+                                    <div>
+                                        <div class="text-xs text-vintage-600 font-medium mb-0.5" id="withdrawStudentIdDisplay">
+                                            รหัส: -</div>
+                                        <div class="font-semibold text-vintage-900 leading-tight"
+                                            id="withdrawStudentNameDisplay">ชื่อ - นามสกุล</div>
+                                        <div class="text-xs text-vintage-500 mt-1" id="withdrawStudentRoomDisplay"><i
+                                                class="fa-solid fa-school text-gold-500"></i> ห้อง -</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Accordion List -->
+                            <div id="withdrawStudentListContainer" class="flex-grow overflow-y-auto pr-2 space-y-2 pb-2">
+                                <!-- Students will be injected here -->
+                                <div class="text-center text-vintage-400 text-sm py-4">กำลังโหลดรายชื่อ...</div>
+                            </div>
+
+                            <!-- Pagination Controls -->
+                            <div id="withdrawPaginationControls"
+                                class="hidden flex justify-between items-center pt-3 mt-2 border-t border-vintage-100 shrink-0">
+                                <button onclick="prevWithdrawPage()" id="btnWithdrawPrev"
+                                    class="px-3 py-1.5 text-xs font-medium text-vintage-600 bg-vintage-100 rounded hover:bg-vintage-200 transition disabled:opacity-50 disabled:cursor-not-allowed border border-vintage-200">
+                                    <i class="fa-solid fa-chevron-left"></i> ก่อนหน้า
+                                </button>
+                                <span id="withdrawPageIndicator" class="text-xs text-vintage-500 font-medium">หน้า 1 / 1</span>
+                                <button onclick="nextWithdrawPage()" id="btnWithdrawNext"
+                                    class="px-3 py-1.5 text-xs font-medium text-vintage-600 bg-vintage-100 rounded hover:bg-vintage-200 transition disabled:opacity-50 disabled:cursor-not-allowed border border-vintage-200">
+                                    ถัดไป <i class="fa-solid fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Withdraw Form -->
+                    <div class="lg:col-span-2">
+                        <div class="glass-card rounded-xl p-6 sm:p-8">
+                            <div
+                                class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                                <h2 class="text-2xl font-bold text-vintage-800 flex items-center gap-2 vintage-title">
+                                    <i class="fa-solid fa-money-bill-transfer text-gold-500"></i> ถอนเงิน
+                                </h2>
+                                <div class="flex items-center gap-2">
+                                    <input type="date" id="withdrawDate"
+                                        class="text-sm border border-vintage-200 rounded-lg px-4 py-2 text-vintage-800 focus:outline-none focus:border-vintage-500 bg-white shadow-inner">
+                                    <button onclick="refreshWithdrawData()" id="btnRefreshWithdraw"
+                                        class="px-3 py-2 bg-vintage-100 hover:bg-vintage-200 border border-vintage-200 text-vintage-700 rounded-lg transition-colors flex items-center justify-center shrink-0"
+                                        title="โหลดยอดเงินและรายชื่อใหม่ (ไม่ต้องออกจากระบบ)">
+                                        <i class="fa-solid fa-rotate-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Current Balance Box -->
+                            <div
+                                class="bg-gradient-to-r from-vintage-800 to-vintage-600 rounded-xl p-6 text-white shadow-lg mb-8 flex justify-between items-center border border-vintage-900 relative overflow-hidden">
+                                <div
+                                    class="absolute top-0 right-0 w-32 h-32 bg-gold-500 rounded-full mix-blend-overlay filter blur-2xl opacity-20">
+                                </div>
+                                <div class="relative z-10 w-full text-center">
+                                    <div class="text-vintage-100 text-sm mb-1 font-light">ยอดเงินสะสมปัจจุบันที่ถอนได้</div>
+                                    <div class="text-5xl font-bold font-serif"><span id="currentBalanceDisplay">0.00</span>
+                                        <span class="text-lg font-sans font-normal">บาท</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ขึ้นเมื่อยอดคงเหลือยังไม่ถึงเกณฑ์ขั้นต่ำที่ถอนได้ -->
+                            <div id="withdrawMinBalanceNote"
+                                class="hidden -mt-4 mb-8 rounded-lg bg-amber-50 border border-amber-300 px-4 py-3 text-sm text-amber-800 flex items-start gap-2">
+                                <i class="fa-solid fa-circle-exclamation mt-0.5 text-amber-500"></i>
+                                <span></span>
+                            </div>
+
+                            <!-- Withdraw Amount Input -->
+                            <div class="mb-8">
+                                <label class="block text-sm font-medium text-vintage-800 mb-3">จำนวนเงินที่ต้องการถอน</label>
+                                <div class="relative">
+                                    <input type="number" id="withdrawAmountInput" step="0.01"
+                                        class="w-full text-center text-4xl font-bold text-red-600 py-6 rounded-xl border border-vintage-300 focus:border-red-500 outline-none transition bg-white shadow-inner"
+                                        placeholder="0.00">
+                                    <div class="absolute inset-y-0 right-0 pr-6 flex items-center pointer-events-none">
+                                        <span class="text-vintage-500 font-medium">บาท</span>
+                                    </div>
+                                </div>
+                                <div class="text-xs text-red-500 mt-2 hidden" id="withdrawErrorText">ยอดเงินถอนต้องไม่เกินยอดเงินสะสมที่มี</div>
+                            </div>
+
+                            <button onclick="submitWithdraw()" id="submitWithdrawBtn"
+                                class="w-full py-4 bg-red-600 text-white font-medium text-lg rounded-xl hover:bg-red-700 transition duration-300 shadow-md flex justify-center items-center gap-3 border border-red-800">
+                                <i class="fa-solid fa-money-bill-wave"></i> ยืนยันการถอนเงิน
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TAB: HISTORY ===== -->
+            <div id="view-history" class="content-view hidden">
+                <div class="glass-card rounded-xl p-6 shadow-sm">
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+                        <h2 class="text-xl font-bold text-vintage-800 flex items-center gap-2 vintage-title">
+                            <i class="fa-solid fa-scroll text-gold-500"></i> ประวัติรับซื้อวันนี้
+                        </h2>
+
+                        <div class="flex w-full sm:w-auto gap-3">
+                            <input type="date" id="filterDate"
+                                class="border border-vintage-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-vintage-500 bg-white"
+                                onchange="renderHistory()">
+                            <div class="relative flex-grow">
+                                <input type="text" id="filterText"
+                                    class="w-full pl-9 pr-3 py-2 rounded-lg border border-vintage-200 focus:border-vintage-500 outline-none text-sm bg-white"
+                                    placeholder="ค้นหาชื่อ..." oninput="renderHistory()">
+                                <i class="fa-solid fa-search text-vintage-400 absolute left-3 top-2.5 text-xs"></i>
+                            </div>
+                            <button onclick="refreshTransactions()"
+                                class="px-3 py-2 bg-vintage-100 hover:bg-vintage-200 border border-vintage-200 text-vintage-700 rounded-lg transition-colors flex items-center justify-center shrink-0"
+                                title="รีเฟรชข้อมูล">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-lg border border-vintage-100">
+                        <table class="w-full text-left border-collapse whitespace-nowrap">
+                            <thead>
+                                <tr class="bg-vintage-50 text-vintage-800 text-sm border-b border-vintage-200">
+                                    <th class="py-3 px-4 font-semibold">เวลา</th>
+                                    <th class="py-3 px-4 font-semibold">ชื่อ-สกุล</th>
+                                    <th class="py-3 px-4 font-semibold">ขยะ</th>
+                                    <th class="py-3 px-4 font-semibold text-right">น้ำหนัก</th>
+                                    <th class="py-3 px-4 font-semibold text-right">ยอดเงิน</th>
+                                    <th class="py-3 px-4 font-semibold text-center w-16">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody" class="text-sm divide-y divide-vintage-100 bg-white/50">
+                                <tr>
+                                    <td colspan="6" class="py-8 text-center text-vintage-400">
+                                        ยังไม่มีประวัติการรับฝากขยะ...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-6 flex justify-end">
+                        <div
+                            class="bg-vintage-100 px-5 py-3 rounded-lg inline-flex gap-6 text-sm font-medium border border-vintage-200 shadow-inner">
+                            <span class="text-vintage-700">รวมยอดเงิน: <span id="sumPrice"
+                                    class="text-vintage-900 font-bold text-lg">0.00</span> บาท</span>
+                            <span class="text-vintage-700">รวมน้ำหนัก: <span id="sumWeight"
+                                    class="text-vintage-900 font-bold text-lg">0.00</span> กก.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TAB: BALANCE SEARCH ===== -->
+            <div id="view-balance-search" class="content-view hidden">
+                <div class="glass-card rounded-xl p-6 shadow-sm mb-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <h2 class="text-xl font-bold text-vintage-800 flex items-center gap-2 vintage-title">
+                            <i class="fa-solid fa-magnifying-glass-dollar text-gold-500"></i> ค้นหายอดรายคน
+                        </h2>
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <button onclick="printBalanceSearchPdf()"
+                                class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow-sm text-sm whitespace-nowrap flex items-center gap-2">
+                                <i class="fa-solid fa-file-pdf"></i> พิมพ์ PDF
+                            </button>
+                            <button onclick="refreshBalanceSearchData()" id="btnRefreshBalanceSearch"
+                                class="px-3 py-2 bg-vintage-100 hover:bg-vintage-200 border border-vintage-200 text-vintage-700 rounded-lg transition-colors flex items-center justify-center shrink-0"
+                                title="โหลดข้อมูลใหม่ (ไม่ต้องออกจากระบบ)">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ── ตัวกรอง ── -->
+                    <div class="bg-vintage-50/60 border border-vintage-200 rounded-xl p-4 mb-6">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-vintage-700 mb-1">ค้นหา รหัส / ชื่อ / นามสกุล</label>
+                                <div class="relative">
+                                    <input type="text" id="bsSearchText"
+                                        class="w-full pl-10 pr-4 py-2 border border-vintage-300 rounded-lg focus:border-vintage-600 outline-none text-sm bg-white shadow-inner"
+                                        placeholder="พิมพ์เพื่อค้นหา..." oninput="renderBalanceSearch()">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fa-solid fa-search text-vintage-400"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-vintage-700 mb-1">เรียงลำดับ</label>
+                                <select id="bsSortBy" onchange="renderBalanceSearch()"
+                                    class="w-full px-4 py-2 border border-vintage-300 rounded-lg focus:border-vintage-600 outline-none text-sm bg-white shadow-inner">
+                                    <option value="balance-desc">ยอดคงเหลือ มาก → น้อย</option>
+                                    <option value="balance-asc">ยอดคงเหลือ น้อย → มาก</option>
+                                    <option value="deposit-desc">ยอดฝาก มาก → น้อย</option>
+                                    <option value="withdraw-desc">ยอดถอน มาก → น้อย</option>
+                                    <option value="id-asc">รหัสนักเรียน น้อย → มาก</option>
+                                    <option value="name-asc">ชื่อ ก → ฮ</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-vintage-700 mb-1">ยอดฝาก (บาท)</label>
+                                <div class="flex gap-2">
+                                    <select id="bsDepositOp" onchange="renderBalanceSearch()"
+                                        class="w-32 shrink-0 px-2 py-2 border border-vintage-300 rounded-lg focus:border-vintage-600 outline-none text-sm bg-white shadow-inner">
+                                        <option value="">ไม่กรอง</option>
+                                        <option value="gt">มากกว่า</option>
+                                        <option value="gte">≥ มากกว่าหรือเท่ากับ</option>
+                                        <option value="eq">= เท่ากับ</option>
+                                        <option value="lte">≤ น้อยกว่าหรือเท่ากับ</option>
+                                        <option value="lt">น้อยกว่า</option>
+                                    </select>
+                                    <input type="number" id="bsDepositVal" step="0.01" placeholder="0.00"
+                                        class="w-full px-3 py-2 border border-vintage-300 rounded-lg focus:border-vintage-600 outline-none text-sm text-right bg-white shadow-inner"
+                                        oninput="renderBalanceSearch()">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-vintage-700 mb-1">ยอดถอน (บาท)</label>
+                                <div class="flex gap-2">
+                                    <select id="bsWithdrawOp" onchange="renderBalanceSearch()"
+                                        class="w-32 shrink-0 px-2 py-2 border border-vintage-300 rounded-lg focus:border-vintage-600 outline-none text-sm bg-white shadow-inner">
+                                        <option value="">ไม่กรอง</option>
+                                        <option value="gt">มากกว่า</option>
+                                        <option value="gte">≥ มากกว่าหรือเท่ากับ</option>
+                                        <option value="eq">= เท่ากับ</option>
+                                        <option value="lte">≤ น้อยกว่าหรือเท่ากับ</option>
+                                        <option value="lt">น้อยกว่า</option>
+                                    </select>
+                                    <input type="number" id="bsWithdrawVal" step="0.01" placeholder="0.00"
+                                        class="w-full px-3 py-2 border border-vintage-300 rounded-lg focus:border-vintage-600 outline-none text-sm text-right bg-white shadow-inner"
+                                        oninput="renderBalanceSearch()">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-vintage-700 mb-1">ยอดคงเหลือ (บาท)</label>
+                                <div class="flex gap-2">
+                                    <select id="bsBalanceOp" onchange="renderBalanceSearch()"
+                                        class="w-32 shrink-0 px-2 py-2 border border-vintage-300 rounded-lg focus:border-vintage-600 outline-none text-sm bg-white shadow-inner">
+                                        <option value="">ไม่กรอง</option>
+                                        <option value="gt">มากกว่า</option>
+                                        <option value="gte">≥ มากกว่าหรือเท่ากับ</option>
+                                        <option value="eq">= เท่ากับ</option>
+                                        <option value="lte">≤ น้อยกว่าหรือเท่ากับ</option>
+                                        <option value="lt">น้อยกว่า</option>
+                                    </select>
+                                    <input type="number" id="bsBalanceVal" step="0.01" placeholder="0.00"
+                                        class="w-full px-3 py-2 border border-vintage-300 rounded-lg focus:border-vintage-600 outline-none text-sm text-right bg-white shadow-inner"
+                                        oninput="renderBalanceSearch()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end mt-4">
+                            <button onclick="clearBalanceSearchFilters()"
+                                class="px-4 py-2 text-sm text-vintage-600 hover:text-vintage-800 hover:bg-vintage-100 rounded-lg transition flex items-center gap-2">
+                                <i class="fa-solid fa-eraser"></i> ล้างตัวกรองทั้งหมด
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ── การ์ดสรุป ── -->
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-white rounded-xl p-4 border border-vintage-200 shadow-sm">
+                            <div class="text-xs text-vintage-500 mb-1">จำนวนที่พบ</div>
+                            <div class="text-2xl font-bold text-vintage-700"><span id="bsCount">0</span>
+                                <span class="text-sm font-normal text-vintage-500">คน</span></div>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 border border-green-200 shadow-sm">
+                            <div class="text-xs text-vintage-500 mb-1">ยอดฝากรวม</div>
+                            <div class="text-2xl font-bold text-green-700">฿<span id="bsTotalDeposit">0.00</span></div>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 border border-red-200 shadow-sm">
+                            <div class="text-xs text-vintage-500 mb-1">ยอดถอนรวม</div>
+                            <div class="text-2xl font-bold text-red-600">฿<span id="bsTotalWithdraw">0.00</span></div>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 border border-gold-300 shadow-sm">
+                            <div class="text-xs text-vintage-500 mb-1">คงเหลือรวม</div>
+                            <div class="text-2xl font-bold text-gold-600">฿<span id="bsTotalBalance">0.00</span></div>
+                        </div>
+                    </div>
+
+                    <!-- ── ตาราง ── -->
+                    <div class="overflow-x-auto rounded-lg border border-vintage-200 shadow-sm">
+                        <table class="w-full text-left border-collapse whitespace-nowrap">
+                            <thead>
+                                <tr class="bg-vintage-100 text-vintage-800 text-xs border-b border-vintage-200">
+                                    <th class="py-3 px-4 font-semibold w-16 text-center">ลำดับ</th>
+                                    <th class="py-3 px-4 font-semibold w-24">รหัส</th>
+                                    <th class="py-3 px-4 font-semibold">ชื่อ - นามสกุล</th>
+                                    <th class="py-3 px-4 font-semibold w-28">ห้อง/ตำแหน่ง</th>
+                                    <th class="py-3 px-4 font-semibold w-32 text-right">ยอดฝาก (บาท)</th>
+                                    <th class="py-3 px-4 font-semibold w-32 text-right">ยอดถอน (บาท)</th>
+                                    <th class="py-3 px-4 font-semibold w-32 text-right">คงเหลือ (บาท)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="balanceSearchTableBody" class="text-sm divide-y divide-vintage-100 bg-white">
+                                <tr>
+                                    <td colspan="7" class="py-6 text-center text-vintage-400">กำลังโหลด...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TAB: SUMMARY STUDENT ===== -->
+            <div id="view-summary-student" class="content-view hidden">
+                <div class="glass-card rounded-xl p-6 shadow-sm mb-6">
+                    <div class="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
+                        <h2 class="text-xl font-bold text-vintage-800 flex items-center gap-2 vintage-title">
+                            <i class="fa-solid fa-user-graduate text-gold-500"></i> สรุปข้อมูลบุคคล
+                        </h2>
+                        <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                            <select id="summaryStudentSelect"
+                                class="w-full sm:w-72 px-4 py-2 rounded-lg border border-vintage-200 focus:border-vintage-500 outline-none text-sm bg-white"
+                                onchange="renderStudentSummary()">
+                                <option value="">-- เลือกนักเรียน --</option>
+                            </select>
+                            <button onclick="refreshTransactions()" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition shadow-sm text-sm whitespace-nowrap">
+                                <i class="fa-solid fa-rotate-right"></i> รีเฟรชข้อมูล
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 mb-8">
+                        <div
+                            class="bg-white rounded-xl p-4 border border-vintage-200 text-center shadow-sm relative overflow-hidden">
+                            <div class="absolute -right-4 -bottom-4 text-vintage-100 text-5xl"><i
+                                    class="fa-solid fa-weight-hanging"></i></div>
+                            <div class="text-xs text-vintage-500 mb-1 relative z-10">น้ำหนักรวม</div>
+                            <div class="text-xl sm:text-2xl font-bold text-vintage-700 relative z-10"><span
+                                    id="ind-total-weight">0.00</span> <span class="text-sm font-normal">กก.</span></div>
+                        </div>
+                        <div
+                            class="bg-white rounded-xl p-4 border border-vintage-200 text-center shadow-sm relative overflow-hidden">
+                            <div class="absolute -right-4 -bottom-4 text-vintage-100 text-5xl"><i
+                                    class="fa-solid fa-coins"></i></div>
+                            <div class="text-xs text-vintage-500 mb-1 relative z-10">รายได้รวม</div>
+                            <div class="text-xl sm:text-2xl font-bold text-green-700 relative z-10"><span
+                                    id="ind-total-money">0.00</span> <span class="text-sm font-normal">฿</span></div>
+                        </div>
+                        <div
+                            class="bg-white rounded-xl p-4 border border-vintage-200 text-center shadow-sm relative overflow-hidden">
+                            <div class="absolute -right-4 -bottom-4 text-vintage-100 text-5xl"><i
+                                    class="fa-solid fa-medal"></i></div>
+                            <div class="text-[10px] text-vintage-500 mb-1 relative z-10">แต้มรวมสุทธิ <span
+                                    class="text-[8px]">(ฝาก-โอน)</span></div>
+                            <div class="text-xl sm:text-2xl font-bold text-vintage-600 relative z-10"><span
+                                    id="ind-total-points">0</span> <i class="fa-solid fa-star text-sm"></i></div>
+                        </div>
+                        <!-- ส่วนใหม่: โชว์แต้มคงเหลือหลังจากหักสร้างเกาะ -->
+                        <div
+                            class="bg-gradient-to-br from-gold-500 to-gold-600 rounded-xl p-4 border border-gold-600 text-center shadow-md relative overflow-hidden text-white">
+                            <div class="absolute -right-4 -bottom-4 text-white/20 text-5xl"><i
+                                    class="fa-solid fa-gamepad"></i></div>
+                            <div class="text-[10px] text-gold-100 mb-1 relative z-10">แต้มคงเหลือใช้ได้</div>
+                            <div class="text-xl sm:text-2xl font-bold text-white relative z-10"><span
+                                    id="ind-current-points">0</span> <i
+                                    class="fa-solid fa-star text-sm text-yellow-300"></i></div>
+                            <div class="text-[9px] text-gold-200 mt-1 relative z-10">ใช้ไปแล้ว: <span
+                                    id="ind-spent-points">0</span> แต้ม</div>
+                        </div>
+                    </div>
+
+                    <div class="w-full h-72 mb-8 relative bg-white/50 p-4 rounded-xl border border-vintage-100">
+                        <canvas id="studentChart"></canvas>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-lg border border-vintage-200">
+                        <table class="w-full text-left border-collapse whitespace-nowrap">
+                            <thead>
+                                <tr class="bg-vintage-100 text-vintage-800 text-xs border-b border-vintage-200">
+                                    <th class="py-3 px-4 font-semibold">วันที่</th>
+                                    <th class="py-3 px-4 font-semibold">ขยะ</th>
+                                    <th class="py-3 px-4 font-semibold text-right">น้ำหนัก</th>
+                                    <th class="py-3 px-4 font-semibold text-right">ยอดเงิน</th>
+                                    <th class="py-3 px-4 font-semibold text-right">ยอดสะสม</th>
+                                    <th class="py-3 px-4 font-semibold text-right">แต้ม</th>
+                                    <th class="py-3 px-4 font-semibold text-right">สะสม</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentSummaryTableBody" class="text-sm divide-y divide-vintage-100 bg-white">
+                                <tr>
+                                    <td colspan="7" class="py-6 text-center text-vintage-400">
+                                        เลือกรหัสนักเรียนเพื่อดูข้อมูล</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TAB: SUMMARY ROOM ===== -->
+            <div id="view-summary-room" class="content-view hidden">
+                <div class="glass-card rounded-xl p-6 shadow-sm mb-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <h2 class="text-xl font-bold text-vintage-800 flex items-center gap-2 vintage-title">
+                            <i class="fa-solid fa-chart-line text-gold-500"></i> ภาพรวมห้องเรียน
+                        </h2>
+                        <!-- กล่องเลือกห้อง (จะแสดงเฉพาะตอนเข้าด้วย Admin) -->
+                        <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto hidden" id="summaryRoomSelectContainer">
+                            <select id="summaryRoomSelect"
+                                class="w-full sm:w-72 px-4 py-2 rounded-lg border border-vintage-200 focus:border-vintage-500 outline-none text-sm bg-white"
+                                onchange="renderRoomSummary()">
+                                <option value="all">-- รวมทุกห้อง --</option>
+                            </select>
+                            <button onclick="refreshTransactions()" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition shadow-sm text-sm whitespace-nowrap">
+                                <i class="fa-solid fa-rotate-right"></i> รีเฟรชข้อมูล
+                            </button>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto" id="summaryRoomRefreshBtnOnly">
+                            <button onclick="refreshTransactions()" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition shadow-sm text-sm whitespace-nowrap">
+                                <i class="fa-solid fa-rotate-right"></i> รีเฟรชข้อมูล
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div
+                            class="bg-white rounded-xl p-6 border border-vintage-200 flex items-center justify-between shadow-sm">
+                            <div>
+                                <div class="text-sm text-vintage-500 mb-1">น้ำหนักรวมทั้งห้อง</div>
+                                <div class="text-3xl font-bold text-vintage-700"><span
+                                        id="room-total-weight">0.00</span> <span
+                                        class="text-base font-normal text-vintage-500">กก.</span></div>
+                            </div>
+                            <div
+                                class="w-14 h-14 rounded-full bg-vintage-50 flex items-center justify-center text-vintage-400 text-2xl border border-vintage-100">
+                                <i class="fa-solid fa-scale-balanced"></i>
+                            </div>
+                        </div>
+                        <div
+                            class="bg-white rounded-xl p-6 border border-vintage-200 flex items-center justify-between shadow-sm">
+                            <div>
+                                <div class="text-sm text-vintage-500 mb-1">รายได้รวมทั้งห้อง</div>
+                                <div class="text-3xl font-bold text-green-700"><span id="room-total-money">0.00</span>
+                                    <span class="text-base font-normal text-green-600">฿</span>
+                                </div>
+                            </div>
+                            <div
+                                class="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center text-green-500 text-2xl border border-green-100">
+                                <i class="fa-solid fa-sack-dollar"></i>
+                            </div>
+                        </div>
+                        <div
+                            class="bg-white rounded-xl p-6 border border-vintage-200 flex items-center justify-between shadow-sm">
+                            <div>
+                                <div class="text-sm text-vintage-500 mb-1">แต้มรวมทั้งห้อง</div>
+                                <div class="text-3xl font-bold text-gold-600"><span id="room-total-points">0</span>
+                                </div>
+                            </div>
+                            <div
+                                class="w-14 h-14 rounded-full bg-yellow-50 flex items-center justify-center text-gold-500 text-2xl border border-yellow-100">
+                                <i class="fa-solid fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="w-full h-80 mb-8 relative bg-white/50 p-4 rounded-xl border border-vintage-100">
+                        <canvas id="roomChart"></canvas>
+                    </div>
+
+                    <!-- เปลี่ยน Layout ด้านล่างให้เป็น Grid แบ่งคอลัมน์ -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                        <!-- ส่วนที่ 1: จัดอันดับ Top 5 -->
+                        <div class="lg:col-span-1">
+                            <h3
+                                class="text-lg font-semibold text-vintage-800 mb-4 vintage-title flex items-center gap-2">
+                                <i class="fa-solid fa-trophy text-gold-500"></i> Top 5 ยอดนักออม
+                            </h3>
+                            <div id="top5Container" class="space-y-3">
+                                <!-- รายชื่อจะถูกสร้างด้วย JS -->
+                                <div
+                                    class="text-center text-vintage-400 text-sm py-4 bg-white/50 rounded-lg border border-vintage-100">
+                                    ยังไม่มีข้อมูล</div>
+                            </div>
+                        </div>
+
+                        <!-- ส่วนที่ 2: สรุปยอดรายวัน -->
+                        <div class="lg:col-span-2">
+                            <h3 class="text-lg font-semibold text-vintage-800 mb-4 vintage-title">สรุปยอดรายวัน</h3>
+                            <div class="overflow-x-auto rounded-lg border border-vintage-200 shadow-sm">
+                                <table class="w-full text-left border-collapse whitespace-nowrap">
+                                    <thead>
+                                        <tr class="bg-vintage-100 text-vintage-800 text-xs border-b border-vintage-200">
+                                            <th class="py-3 px-4 font-semibold">วันที่</th>
+                                            <th class="py-3 px-4 font-semibold text-center">จำนวนรายการ</th>
+                                            <th class="py-3 px-4 font-semibold text-right">น้ำหนักรวม (กก.)</th>
+                                            <th class="py-3 px-4 font-semibold text-right">ยอดเงินรวม (บาท)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="roomSummaryTableBody"
+                                        class="text-sm divide-y divide-vintage-100 bg-white">
+                                        <tr>
+                                            <td colspan="4" class="py-6 text-center text-vintage-400">ยังไม่มีข้อมูล
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TAB: SUMMARY TEACHER ===== -->
+            <div id="view-summary-teacher" class="content-view hidden">
+                <div class="glass-card rounded-xl p-6 shadow-sm mb-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <h2 class="text-xl font-bold text-vintage-800 flex items-center gap-2 vintage-title">
+                            <i class="fa-solid fa-chalkboard-user text-gold-500"></i> ภาพรวมยอดครู
+                        </h2>
+                        <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto" id="summaryTeacherRefreshBtnOnly">
+                            <button onclick="refreshTransactions()" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition shadow-sm text-sm whitespace-nowrap">
+                                <i class="fa-solid fa-rotate-right"></i> รีเฟรชข้อมูล
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div
+                            class="bg-white rounded-xl p-6 border border-vintage-200 flex items-center justify-between shadow-sm">
+                            <div>
+                                <div class="text-sm text-vintage-500 mb-1">น้ำหนักรวมคุณครู</div>
+                                <div class="text-3xl font-bold text-vintage-700"><span
+                                        id="teacher-total-weight">0.00</span> <span
+                                        class="text-base font-normal text-vintage-500">กก.</span></div>
+                            </div>
+                            <div
+                                class="w-14 h-14 rounded-full bg-vintage-50 flex items-center justify-center text-vintage-400 text-2xl border border-vintage-100">
+                                <i class="fa-solid fa-scale-balanced"></i>
+                            </div>
+                        </div>
+                        <div
+                            class="bg-white rounded-xl p-6 border border-vintage-200 flex items-center justify-between shadow-sm">
+                            <div>
+                                <div class="text-sm text-vintage-500 mb-1">รายได้รวมคุณครู</div>
+                                <div class="text-3xl font-bold text-green-700"><span id="teacher-total-money">0.00</span>
+                                    <span class="text-base font-normal text-green-600">฿</span>
+                                </div>
+                            </div>
+                            <div
+                                class="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center text-green-500 text-2xl border border-green-100">
+                                <i class="fa-solid fa-sack-dollar"></i>
+                            </div>
+                        </div>
+                        <div
+                            class="bg-white rounded-xl p-6 border border-vintage-200 flex items-center justify-between shadow-sm">
+                            <div>
+                                <div class="text-sm text-vintage-500 mb-1">แต้มรวมคุณครู</div>
+                                <div class="text-3xl font-bold text-gold-600"><span id="teacher-total-points">0</span>
+                                </div>
+                            </div>
+                            <div
+                                class="w-14 h-14 rounded-full bg-yellow-50 flex items-center justify-center text-gold-500 text-2xl border border-yellow-100">
+                                <i class="fa-solid fa-star"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="w-full h-80 mb-8 relative bg-white/50 p-4 rounded-xl border border-vintage-100">
+                        <canvas id="teacherChart"></canvas>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-1">
+                            <h3
+                                class="text-lg font-semibold text-vintage-800 mb-4 vintage-title flex items-center gap-2">
+                                <i class="fa-solid fa-trophy text-gold-500"></i> Top 5 ยอดนักออม (ครู)
+                            </h3>
+                            <div id="teacherTop5Container" class="space-y-3">
+                                <div
+                                    class="text-center text-vintage-400 text-sm py-4 bg-white/50 rounded-lg border border-vintage-100">
+                                    ยังไม่มีข้อมูล</div>
+                            </div>
+                        </div>
+
+                        <div class="lg:col-span-2">
+                            <h3 class="text-lg font-semibold text-vintage-800 mb-4 vintage-title">สรุปยอดรายวัน</h3>
+                            <div class="overflow-x-auto rounded-lg border border-vintage-200 shadow-sm">
+                                <table class="w-full text-left border-collapse whitespace-nowrap">
+                                    <thead>
+                                        <tr class="bg-vintage-100 text-vintage-800 text-xs border-b border-vintage-200">
+                                            <th class="py-3 px-4 font-semibold">วันที่</th>
+                                            <th class="py-3 px-4 font-semibold text-center">จำนวนรายการ</th>
+                                            <th class="py-3 px-4 font-semibold text-right">น้ำหนักรวม (กก.)</th>
+                                            <th class="py-3 px-4 font-semibold text-right">ยอดเงินรวม (บาท)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="teacherSummaryTableBody"
+                                        class="text-sm divide-y divide-vintage-100 bg-white">
+                                        <tr>
+                                            <td colspan="4" class="py-6 text-center text-vintage-400">ยังไม่มีข้อมูล
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TAB: REPORT ===== -->
+            <div id="view-report" class="content-view hidden">
+                <div class="glass-card rounded-xl p-6 shadow-sm mb-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <h2 class="text-xl font-bold text-vintage-800 flex items-center gap-2 vintage-title">
+                            <i class="fa-solid fa-file-invoice text-gold-500"></i> รายงานประจำเดือน
+                        </h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-vintage-700 mb-1">วันที่เริ่มต้น</label>
+                            <input type="date" id="reportStartDate"
+                                class="w-full px-4 py-2 border border-vintage-300 rounded-lg focus:border-vintage-600 outline-none text-sm bg-white shadow-inner">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-vintage-700 mb-1">วันที่สิ้นสุด</label>
+                            <input type="date" id="reportEndDate"
+                                class="w-full px-4 py-2 border border-vintage-300 rounded-lg focus:border-vintage-600 outline-none text-sm bg-white shadow-inner">
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                        <button onclick="generateReport()" id="generateReportBtn"
+                            class="px-6 py-3 w-full sm:w-auto bg-gradient-to-r from-vintage-700 to-vintage-600 text-white font-medium rounded-lg hover:shadow-lg hover:from-vintage-800 hover:to-vintage-700 transition duration-300 flex justify-center items-center gap-2 border border-vintage-900">
+                            <i class="fa-solid fa-search"></i> ดูรายงาน
+                        </button>
+                        <button onclick="exportReportToPDF()" id="exportReportPdfBtn"
+                            class="px-6 py-3 w-full sm:w-auto bg-gradient-to-r from-green-600 to-green-500 text-white font-medium rounded-lg hover:shadow-lg hover:from-green-700 hover:to-green-600 transition duration-300 flex justify-center items-center gap-2 border border-green-800">
+                            <i class="fa-solid fa-file-pdf"></i> ออกรายงาน PDF
+                        </button>
+                    </div>
+
+                    <div id="reportContainer"
+                        class="mt-8 overflow-x-auto bg-white rounded-xl border border-vintage-100 shadow-sm hidden">
+                    </div>
+
+                    <div id="reportPlaceholder"
+                        class="mt-8 text-center text-vintage-400 py-10 bg-white/50 rounded-xl border border-vintage-100">
+                        <i class="fa-solid fa-file-lines text-4xl mb-3 text-vintage-300"></i>
+                        <p>ส่วนของรายงานจะแสดงที่นี่</p>
+                        <p class="text-sm mt-1">กรุณาเลือกช่วงวันที่แล้วกด "ดูรายงาน"</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TAB: SETTINGS ===== -->
+            <div id="view-settings" class="content-view hidden">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="md:col-span-1">
+                        <div class="glass-card rounded-xl p-6 shadow-sm sticky top-24">
+                            <h2 class="text-xl font-bold text-vintage-800 flex items-center gap-2 mb-6 vintage-title">
+                                <i class="fa-solid fa-feather text-gold-500"></i> เพิ่มประเภทขยะ
+                            </h2>
+                            <form id="addWasteForm" onsubmit="event.preventDefault(); addWasteType();"
+                                class="space-y-5">
+                                <div>
+                                    <label class="block text-sm font-medium text-vintage-700 mb-1">ชื่อประเภทขยะ</label>
+                                    <input type="text" id="wName" required
+                                        class="w-full px-4 py-2 border border-vintage-300 rounded-lg focus:border-vintage-600 outline-none text-sm bg-white shadow-inner">
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-vintage-700 mb-1">ราคา/กก.
+                                            (฿)</label>
+                                        <input type="number" id="wPrice" step="0.5" required
+                                            class="w-full px-4 py-2 border border-vintage-300 rounded-lg focus:border-vintage-600 outline-none text-sm bg-white shadow-inner">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-vintage-700 mb-1">แต้ม/กก.</label>
+                                        <input type="number" id="wPoints" step="0.5" required
+                                            class="w-full px-4 py-2 border border-vintage-300 rounded-lg focus:border-vintage-600 outline-none text-sm bg-white shadow-inner">
+                                    </div>
+                                </div>
+                                <button type="submit"
+                                    class="w-full py-3 bg-vintage-800 text-gold-300 font-medium rounded-lg hover:bg-vintage-900 transition text-sm flex justify-center items-center gap-2 border border-vintage-900 mt-2">
+                                    <i class="fa-solid fa-plus"></i> บันทึกเข้าระบบ
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <div class="glass-card rounded-xl p-6 shadow-sm">
+                            <h2 class="text-xl font-bold text-vintage-800 flex items-center gap-2 mb-6 vintage-title">
+                                <i class="fa-solid fa-list-ol text-gold-500"></i> รายการประเภทขยะ
+                            </h2>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="settingsWasteList">
+                                <!-- Waste List Generated Here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // ================= URL Web App ของคุณ =================
+        // วาง URL ที่ได้จากการ Deploy ของ Google Apps Script ตรงนี้
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxpdVTEwoLgLyYsjcrtBk9QVzNWMw0IKcAgm8x9KpZ9cdOUDuJiw2CAFvEmP8IN5_X1/exec';
+
+        // ================= S T A T E =================
+        let currentUser = null;
+        let currentRole = null;
+        let students = [];
+        let wasteTypes = [];
+        let transactions = [];
+        let selectedStudent = null;
+        let selectedWasteType = null;
+
+        let studentChart = null;
+        let roomChart = null;
+
+        // Pagination state
+        let currentPage = 1;
+        const itemsPerPage = 5;
+        let filteredStudentsCache = [];
+
+        /** ยอดเงินคงเหลือขั้นต่ำ (บาท) ที่ต้องมีจึงจะถอนเงินได้ — ต่ำกว่านี้ระบบจะไม่ให้ถอน */
+        const MIN_WITHDRAW_BALANCE = 50;
+
+        // Set today as default
+        let now = new Date();
+        let yyyy = now.getFullYear();
+        let mm = String(now.getMonth() + 1).padStart(2, '0');
+        let dd = String(now.getDate()).padStart(2, '0');
+        
+        document.getElementById('depositDate').value = `${yyyy}-${mm}-${dd}`;
+        document.getElementById('filterDate').value = `${yyyy}-${mm}-${dd}`;
+        document.getElementById('reportStartDate').value = `${yyyy}-${mm}-01`;
+        document.getElementById('reportEndDate').value = `${yyyy}-${mm}-${dd}`;
+        document.getElementById('withdrawDate').value = `${yyyy}-${mm}-${dd}`;
+
+        // ================= F E T C H   A P I =================
+        async function callBackend(action, payload) {
+            if (SCRIPT_URL.includes('YOUR_APP_SCRIPT_URL_HERE')) {
+                throw new Error("กรุณาใส่ SCRIPT_URL ให้ถูกต้องในโค้ดก่อนใช้งานครับ");
+            }
+            const requestData = { action: action, ...payload };
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(requestData)
+                });
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                throw error;
+            }
+        }
+
+        // ================= L O G I N =================
+        async function doLogin() {
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            const btn = document.getElementById('loginBtn');
+            btn.innerHTML = '<i class="fa-solid fa-hourglass-half fa-spin"></i> กำลังตรวจสอบ...';
+            btn.disabled = true;
+
+            try {
+                let res = await callBackend('login', { username: u, password: p });
+
+                if (res.status === 'success') {
+                    currentUser = res.user;
+                    currentRole = res.role;
+                    students = res.students;
+
+                    document.getElementById('displayTeacherName').innerText = currentUser.name;
+                    document.getElementById('displayTeacherRoom').innerText = 'ที่ปรึกษา ' + currentUser.room;
+
+                    // ครูจะไม่เห็นปุ่มเมนูของแอดมินเลย (ตั้งค่า, ถอนเงิน)
+                    ADMIN_ONLY_TABS.forEach(t => {
+                        document.getElementById('tab-' + t).classList.toggle('hidden', currentRole !== 'admin');
+                    });
+
+                    document.getElementById('loginView').classList.add('hidden');
+                    document.getElementById('mainAppView').classList.remove('hidden');
+
+                    loadWasteTypes();
+                    loadTransactions();
+
+                    Swal.fire({
+                        title: 'เข้าสู่ระบบสำเร็จ',
+                        text: `ยินดีต้อนรับ ${currentUser.name}`,
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false,
+                        confirmButtonColor: '#16a34a'
+                    });
+                } else {
+                    Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: res.message, confirmButtonColor: '#16a34a' });
+                }
+            } catch (err) {
+                Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: err.toString(), confirmButtonColor: '#16a34a' });
+            } finally {
+                btn.innerHTML = '<span>เข้าสู่ระบบ</span><i class="fa-solid fa-key"></i>';
+                btn.disabled = false;
+            }
+        }
+
+        function logout() {
+            Swal.fire({
+                title: 'ยืนยันการออกจากระบบ?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#15803d',
+                cancelButtonColor: '#bbf7d0',
+                confirmButtonText: 'ออกจากระบบ',
+                cancelButtonText: 'ยกเลิก'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    currentUser = null;
+                    currentRole = null;
+                    document.getElementById('mainAppView').classList.add('hidden');
+                    document.getElementById('loginView').classList.remove('hidden');
+                    document.getElementById('username').value = '';
+                    document.getElementById('password').value = '';
+
+                    // Clear dropdowns so they can be repopulated for the next user
+                    document.getElementById('summaryStudentSelect').innerHTML = '<option value="">-- เลือกนักเรียน --</option>';
+                    document.getElementById('summaryRoomSelect').innerHTML = '<option value="all">-- รวมทุกห้อง --</option>';
+
+                    resetDepositForm();
+                    resetWithdrawSelectedStudent();
+                    switchTab('deposit');
+                }
+            })
+        }
+
+        /** เมนูที่สงวนไว้ให้แอดมินเท่านั้น — ปุ่มจะถูกซ่อนตอนล็อกอิน และกันไว้อีกชั้นที่ switchTab */
+        const ADMIN_ONLY_TABS = ['settings', 'withdraw'];
+
+        function switchTab(tabId) {
+            if (ADMIN_ONLY_TABS.indexOf(tabId) !== -1 && currentRole !== 'admin') {
+                Swal.fire({ icon: 'warning', title: 'ปฏิเสธการเข้าถึง', text: 'เมนูนี้สงวนไว้สำหรับผู้ดูแลระบบเท่านั้น', confirmButtonColor: '#16a34a' });
+                return;
+            }
+
+            document.querySelectorAll('.content-view').forEach(el => el.classList.add('hidden'));
+            document.getElementById('view-' + tabId).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('border-vintage-600', 'text-vintage-700');
+                el.classList.add('border-transparent', 'text-gray-400');
+            });
+
+            let activeBtn = document.getElementById('tab-' + tabId);
+            activeBtn.classList.remove('border-transparent', 'text-gray-400');
+            activeBtn.classList.add('border-vintage-600', 'text-vintage-700');
+
+            if (tabId === 'fast-deposit') initFastDeposit();
+            if (tabId === 'history') renderHistory();
+            if (tabId === 'balance-search') renderBalanceSearch();
+            if (tabId === 'withdraw') renderWithdrawStudentList();
+            if (tabId === 'summary-student') initStudentSummary();
+            if (tabId === 'summary-room') initRoomSummary();
+            if (tabId === 'summary-teacher') renderTeacherSummary();
+        }
+
+        // ================= D E P O S I T =================
+
+        /**
+         * รายชื่อที่ผู้ใช้คนนี้มีสิทธิ์เห็น — ใช้ร่วมกันทั้งหน้ารับฝาก รับฝากด่วน และค้นหายอดรายคน
+         *
+         * แอดมินเห็นทุกคน ส่วนครูประจำชั้นเห็นนักเรียนห้องตัวเอง
+         * บวกครูที่เป็นครูประจำชั้นห้องเดียวกันเท่านั้น — ไม่ใช่ครูทั้งโรงเรียนอย่างที่เคยเป็น
+         *
+         * advisorRooms มาจาก appscript.js ซึ่งจับคู่ชื่อในช่อง "ครูที่ปรึกษา" กับแถวบุคลากรให้แล้ว
+         */
+        function visibleStudents() {
+            if (currentRole === 'admin') return students;
+            const myRoom = currentUser ? currentUser.room : '';
+            return students.filter(s =>
+                !s.isTeacher || (s.advisorRooms || []).indexOf(myRoom) !== -1
+            );
+        }
+
+        /**
+         * รายการธุรกรรมที่ผู้ใช้คนนี้มีสิทธิ์เห็น
+         *
+         * getTransactions ฝั่ง appscript.js ส่งรายการของครูทั้งโรงเรียนติดมาด้วย
+         * จึงกรองซ้ำอีกชั้นให้เหลือเฉพาะคนที่อยู่ในรายชื่อที่มีสิทธิ์เห็นจริง
+         *
+         * แอดมินไม่กรอง เพื่อให้ยังเห็นรายการของคนที่ถูกลบออกจากชีต Data ไปแล้ว
+         */
+        function visibleTransactions() {
+            if (currentRole === 'admin') return transactions;
+            const allowed = {};
+            visibleStudents().forEach(s => { allowed[String(s.id)] = true; });
+            return transactions.filter(t => allowed[String(t.studentId)]);
+        }
+
+        function renderStudentList(resetPage = true) {
+            if (resetPage) currentPage = 1; // Reset to page 1 when searching or initially loading
+
+            const container = document.getElementById('studentListContainer');
+            const paginationControls = document.getElementById('paginationControls');
+            const val = document.getElementById('searchStudent').value.toLowerCase();
+
+            // Update filtered cache
+            filteredStudentsCache = visibleStudents().filter(s =>
+                s.id.includes(val) || s.name.includes(val) || s.surname.includes(val)
+            );
+
+            container.innerHTML = '';
+
+            if (filteredStudentsCache.length === 0) {
+                container.innerHTML = '<div class="text-center text-vintage-400 text-sm py-4">ไม่พบรายชื่อ</div>';
+                paginationControls.classList.add('hidden');
+                return;
+            }
+
+            // Calculate pagination
+            const totalPages = Math.ceil(filteredStudentsCache.length / itemsPerPage);
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const paginatedStudents = filteredStudentsCache.slice(startIndex, endIndex);
+
+            // Render items
+            paginatedStudents.forEach((s, index) => {
+                let totalW = 0, totalP = 0, totalMoney = 0;
+                transactions.forEach(t => {
+                    if (t.studentId == s.id) {
+                        totalW += parseFloat(t.weight) || 0;
+                        totalMoney += parseFloat(t.price) || 0;
+                        totalP += parseFloat(t.points) || 0;
+                    }
+                });
+
+                const isSelected = selectedStudent && selectedStudent.id === s.id;
+                const borderClass = isSelected ? 'border-vintage-500 ring-1 ring-vintage-500' : 'border-vintage-200 hover:border-vintage-400';
+                
+                const accHiddenClass = isSelected ? '' : 'hidden';
+                const iconRotateClass = isSelected ? 'rotate-180' : '';
+
+                const delay = index * 50; // Staggered animation
+
+                const item = document.createElement('div');
+                item.className = `rounded-lg border bg-white overflow-hidden shadow-sm transition-all duration-200 ${borderClass} fade-in`;
+                item.style.animationDelay = `${delay}ms`;
+                item.style.opacity = '0';
+                item.style.animationFillMode = 'forwards';
+
+                item.innerHTML = `
+          <div class="px-4 py-3 bg-white flex justify-between items-center cursor-pointer hover:bg-vintage-50 transition-colors" onclick="selectStudentById('${s.id}')">
+              <div class="flex items-center gap-3">
+                 <div class="w-8 h-8 rounded-full ${isSelected ? 'bg-vintage-600 text-white' : 'bg-vintage-100 text-vintage-700'} flex items-center justify-center font-bold text-xs transition-colors border border-vintage-200">${s.name.charAt(0)}</div>
+                 <div>
+                     <div class="text-sm font-semibold ${isSelected ? 'text-vintage-800' : 'text-vintage-700'}">${s.id} - ${s.title}${s.name} ${s.surname.substring(0, 5)}...</div>
+                 </div>
+              </div>
+              <i class="fa-solid fa-chevron-down text-vintage-400 transition-transform duration-200 text-xs ${iconRotateClass}" id="acc-icon-${s.id}"></i>
+          </div>
+          
+          <div id="acc-content-${s.id}" class="${accHiddenClass} border-t border-vintage-100 p-4 bg-vintage-50/30">
+              <div class="grid grid-cols-3 gap-2 text-center">
+                 <div class="bg-white p-2 rounded border border-vintage-100 shadow-sm">
+                    <div class="text-[10px] text-vintage-500">น้ำหนักรวม</div>
+                    <div class="text-sm font-bold text-vintage-700">${totalW.toFixed(2)} <span class="text-xs font-normal">กก.</span></div>
+                 </div>
+                 <div class="bg-white p-2 rounded border border-green-100 shadow-sm">
+                    <div class="text-[10px] text-vintage-500">เงินสะสม</div>
+                    <div class="text-sm font-bold text-green-700">฿${totalMoney.toFixed(2)}</div>
+                 </div>
+                 <div class="bg-white p-2 rounded border border-yellow-100 shadow-sm">
+                    <div class="text-[10px] text-vintage-500">แต้มสะสม</div>
+                    <div class="text-sm font-bold text-gold-600">${Math.floor(totalP)} <i class="fa-solid fa-star text-xs"></i></div>
+                 </div>
+              </div>
+          </div>
+        `;
+                container.appendChild(item);
+            });
+
+            // Update Pagination UI
+            if (totalPages > 1) {
+                paginationControls.classList.remove('hidden');
+                document.getElementById('pageIndicator').innerText = `หน้า ${currentPage} / ${totalPages}`;
+                document.getElementById('btnPrev').disabled = currentPage === 1;
+                document.getElementById('btnNext').disabled = currentPage === totalPages;
+            } else {
+                paginationControls.classList.add('hidden');
+            }
+        }
+
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderStudentList(false); // Don't reset page
+                document.getElementById('studentListContainer').scrollTop = 0;
+            }
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(filteredStudentsCache.length / itemsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderStudentList(false); // Don't reset page
+                document.getElementById('studentListContainer').scrollTop = 0;
+            }
+        }
+
+
+
+        function selectStudentById(id) {
+            const student = students.find(s => s.id == id);
+            if (student) selectStudent(student);
+        }
+
+        function selectStudent(student) {
+            selectedStudent = student;
+            document.getElementById('searchStudent').value = '';
+
+            document.getElementById('studentInitials').innerText = student.name.charAt(0);
+            document.getElementById('studentIdDisplay').innerText = 'รหัส: ' + student.id;
+            document.getElementById('studentNameDisplay').innerText = `${student.title}${student.name} ${student.surname}`;
+            const roomText = student.isTeacher 
+                ? `<i class="fa-solid fa-chalkboard-user text-gold-500"></i> ตำแหน่ง ${student.room}` 
+                : `<i class="fa-solid fa-school text-gold-500"></i> ห้อง ${student.room}`;
+            document.getElementById('studentRoomDisplay').innerHTML = roomText;
+
+            document.getElementById('selectedStudentCard').classList.remove('hidden');
+            renderStudentList();
+            document.getElementById('studentListContainer').scrollTop = 0;
+        }
+
+        function resetSelectedStudent() {
+            selectedStudent = null;
+            document.getElementById('selectedStudentCard').classList.add('hidden');
+            renderStudentList();
+        }
+
+        async function loadWasteTypes() {
+            try {
+                let res = await callBackend('getWasteTypes', {});
+                if (res.status === 'success') {
+                    wasteTypes = res.data;
+                    renderWasteTypes();
+                    renderSettingsWasteList();
+                }
+            } catch (err) { console.error('Load waste types failed', err); }
+        }
+
+        function renderWasteTypes() {
+            const container = document.getElementById('wasteTypeContainer');
+            container.innerHTML = '';
+
+            if (wasteTypes.length === 0) {
+                container.innerHTML = '<div class="text-center text-vintage-400 text-sm py-4 col-span-full">ยังไม่มีข้อมูลประเภทขยะ กรุณาตั้งค่าเพิ่มเติม</div>';
+                return;
+            }
+
+            wasteTypes.forEach((type, index) => {
+                const html = `
+          <label class="cursor-pointer relative">
+            <input type="radio" name="wasteType" value="${index}" class="peer sr-only radio-card" onchange="selectWaste(${index})">
+            <div class="rounded-lg border border-vintage-200 p-3 hover:bg-vintage-50 transition text-center h-full bg-white shadow-sm">
+              <div class="font-medium text-vintage-800 text-sm mb-1">${type.name}</div>
+              <div class="text-xs text-vintage-600">฿${type.price}/กก. | <i class="fa-solid fa-star text-gold-500 text-[10px]"></i> ${type.points}</div>
+            </div>
+          </label>
+        `;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        function selectWaste(index) {
+            selectedWasteType = wasteTypes[index];
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            const wStr = document.getElementById('weightInput').value;
+            const weight = parseFloat(wStr) || 0;
+            let price = 0, points = 0;
+
+            if (selectedWasteType && weight > 0) {
+                price = weight * selectedWasteType.price;
+                points = weight * selectedWasteType.points;
+            }
+
+            document.getElementById('totalPriceDisplay').innerText = price.toFixed(2);
+            document.getElementById('totalPointsDisplay').innerText = Math.floor(points);
+        }
+
+        async function submitDeposit() {
+            if (!selectedStudent) return Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'กรุณาค้นหาและเลือกนักเรียนก่อน', confirmButtonColor: '#16a34a' });
+            if (!selectedWasteType) return Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'กรุณาเลือกประเภทขยะ', confirmButtonColor: '#16a34a' });
+
+            const weight = parseFloat(document.getElementById('weightInput').value);
+            if (!weight || weight <= 0) return Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'กรุณาระบุน้ำหนักให้ถูกต้อง', confirmButtonColor: '#16a34a' });
+
+            const payload = {
+                date: document.getElementById('depositDate').value,
+                studentId: selectedStudent.id,
+                studentName: `${selectedStudent.title}${selectedStudent.name} ${selectedStudent.surname}`,
+                room: selectedStudent.room,
+                wasteTypeName: selectedWasteType.name,
+                weight: weight,
+                totalPrice: parseFloat(document.getElementById('totalPriceDisplay').innerText),
+                totalPoints: parseInt(document.getElementById('totalPointsDisplay').innerText),
+                teacherName: currentUser.name
+            };
+
+            Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            try {
+                let res = await callBackend('saveTransaction', { data: payload });
+                if (res.status === 'success') {
+                    Swal.fire({ icon: 'success', title: 'สำเร็จ', text: 'บันทึกข้อมูลเรียบร้อยแล้ว', confirmButtonColor: '#16a34a' });
+                    resetDepositForm();
+                    loadTransactions();
+                } else {
+                    Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: res.message, confirmButtonColor: '#16a34a' });
+                }
+            } catch (err) {
+                Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: err.toString(), confirmButtonColor: '#16a34a' });
+            }
+        }
+
+        function resetDepositForm() {
+            resetSelectedStudent();
+            document.getElementById('searchStudent').value = '';
+            document.getElementById('weightInput').value = '';
+            document.getElementById('totalPriceDisplay').innerText = '0.00';
+            document.getElementById('totalPointsDisplay').innerText = '0';
+            const radios = document.getElementsByName('wasteType');
+            for (let i = 0; i < radios.length; i++) radios[i].checked = false;
+            selectedWasteType = null;
+        }
+
+        // ================= F A S T   D E P O S I T =================
+        let fastDepositFilteredStudents = [];
+        
+        function initFastDeposit() {
+            if (!document.getElementById('fastDepositDate').value) {
+                document.getElementById('fastDepositDate').value = `${yyyy}-${mm}-${dd}`;
+            }
+            renderFastDepositTable();
+        }
+
+        function renderFastDepositTable() {
+            const searchTerm = document.getElementById('searchFastDeposit').value.trim().toLowerCase();
+            const tbody = document.getElementById('fastDepositTableBody');
+            
+            fastDepositFilteredStudents = visibleStudents().filter(s => {
+                const matchId = s.id.toString().includes(searchTerm);
+                const matchName = s.name.toLowerCase().includes(searchTerm);
+                const matchSurname = s.surname.toLowerCase().includes(searchTerm);
+                return matchId || matchName || matchSurname;
+            });
+
+            const displayStudents = fastDepositFilteredStudents.slice(0, 30);
+
+            tbody.innerHTML = '';
+            
+            if (displayStudents.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-vintage-400">ไม่พบรายชื่อ</td></tr>';
+                return;
+            }
+
+            let wasteOptions = '<option value="">เลือกประเภทขยะ</option>';
+            wasteTypes.forEach((w, idx) => {
+                wasteOptions += `<option value="${idx}">${w.name} (฿${w.price})</option>`;
+            });
+
+            displayStudents.forEach(s => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-vintage-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="py-3 px-4 text-center text-vintage-600">${s.id}</td>
+                    <td class="py-3 px-4 text-vintage-800 font-medium">${s.title}${s.name} ${s.surname}</td>
+                    <td class="py-3 px-4">
+                        <select id="fd-waste-${s.id}" class="w-full px-2 py-1.5 border border-vintage-300 rounded text-sm outline-none focus:border-vintage-500 bg-white" onchange="calcFastDeposit('${s.id}')">
+                            ${wasteOptions}
+                        </select>
+                    </td>
+                    <td class="py-3 px-4">
+                        <input type="number" id="fd-weight-${s.id}" class="w-full px-2 py-1.5 border border-vintage-300 rounded text-sm text-right outline-none focus:border-vintage-500 bg-white" placeholder="0.00" min="0" step="0.1" oninput="calcFastDeposit('${s.id}')">
+                    </td>
+                    <td class="py-3 px-4 text-right font-bold text-green-700" id="fd-price-${s.id}">0.00</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            if (fastDepositFilteredStudents.length > 30) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td colspan="5" class="py-3 text-center text-vintage-400 text-xs bg-vintage-50/50">แสดงผล 30 รายการแรก พิมพ์ค้นหาเพื่อดูรายชื่ออื่นๆ</td>`;
+                tbody.appendChild(tr);
+            }
+        }
+
+        function calcFastDeposit(id) {
+            const wasteSelect = document.getElementById(`fd-waste-${id}`);
+            const weightInput = document.getElementById(`fd-weight-${id}`);
+            const priceDisplay = document.getElementById(`fd-price-${id}`);
+            
+            if (!wasteSelect || !weightInput || !priceDisplay) return;
+            
+            const wasteIdx = wasteSelect.value;
+            const weight = parseFloat(weightInput.value) || 0;
+            
+            if (wasteIdx === "" || weight <= 0) {
+                priceDisplay.innerText = "0.00";
+                return;
+            }
+            
+            const wType = wasteTypes[wasteIdx];
+            const price = weight * wType.price;
+            priceDisplay.innerText = price.toFixed(2);
+        }
+
+        async function submitAllFastDeposit() {
+            const date = document.getElementById('fastDepositDate').value;
+            if (!date) return Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'กรุณาเลือกวันที่', confirmButtonColor: '#16a34a' });
+
+            const payloads = [];
+            const rowsToClear = [];
+
+            const displayStudents = fastDepositFilteredStudents.slice(0, 30);
+            
+            for (const s of displayStudents) {
+                const wasteSelect = document.getElementById(`fd-waste-${s.id}`);
+                const weightInput = document.getElementById(`fd-weight-${s.id}`);
+                if (!wasteSelect || !weightInput) continue;
+
+                const wasteIdx = wasteSelect.value;
+                const weight = parseFloat(weightInput.value);
+
+                if (wasteIdx !== "" && weight > 0) {
+                    const wType = wasteTypes[wasteIdx];
+                    const price = weight * wType.price;
+                    const points = weight * wType.points;
+
+                    payloads.push({
+                        date: date,
+                        studentId: s.id,
+                        studentName: `${s.title}${s.name} ${s.surname}`,
+                        room: s.room,
+                        wasteTypeName: wType.name,
+                        weight: weight,
+                        totalPrice: price,
+                        totalPoints: Math.floor(points),
+                        teacherName: currentUser.name
+                    });
+                    rowsToClear.push(s.id);
+                }
+            }
+
+            if (payloads.length === 0) {
+                return Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'กรุณาระบุประเภทขยะและน้ำหนักอย่างน้อย 1 รายการ', confirmButtonColor: '#16a34a' });
+            }
+
+            const btn = document.getElementById('btnSubmitAllFastDeposit');
+            const oldHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...';
+            btn.disabled = true;
+
+            try {
+                let res = await callBackend('saveTransaction', { data: payloads });
+                if (res.status === 'success') {
+                    Swal.fire({ 
+                        icon: 'success', 
+                        title: 'บันทึกสำเร็จ', 
+                        text: `บันทึกข้อมูล ${payloads.length} รายการแล้ว`, 
+                        timer: 1500, 
+                        showConfirmButton: false 
+                    });
+                    
+                    rowsToClear.forEach(id => {
+                        document.getElementById(`fd-waste-${id}`).value = "";
+                        document.getElementById(`fd-weight-${id}`).value = "";
+                        document.getElementById(`fd-price-${id}`).innerText = "0.00";
+                    });
+                    
+                    loadTransactions();
+                } else {
+                    Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: res.message, confirmButtonColor: '#16a34a' });
+                }
+            } catch (err) {
+                Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: err.toString(), confirmButtonColor: '#16a34a' });
+            } finally {
+                btn.innerHTML = oldHtml;
+                btn.disabled = false;
+            }
+        }
+
+        // ================= H I S T O R Y =================
+        function extractDateString(val) {
+            if (!val) return '';
+
+            // 1. ถ้าเป็นรูปแบบ YYYY-MM-DD แบบเป๊ะๆ อยู่แล้ว (เช่นที่พิมพ์จากฟอร์ม) ให้ใช้เลย
+            if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
+                return val;
+            }
+
+            // 2. นำค่าที่ได้จากหลังบ้านไปสร้าง Date Object เพื่อให้ Browser ปรับ Timezone เป็นของไทย (UTC+7) ก่อน
+            let d = new Date(val);
+            if (!isNaN(d.getTime())) {
+                // แล้วค่อยประกอบร่างใหม่เป็น YYYY-MM-DD
+                return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            }
+
+            // 3. Fallback สำหรับกรณีรูปแบบอื่นๆ
+            if (typeof val === 'string' && val.includes('T')) {
+                return val.split('T')[0];
+            }
+            return val;
+        }
+
+        async function loadTransactions() {
+            try {
+                // แจ้ง Backend ว่าถ้าเป็น admin ให้ดึงประวัติของ 'admin' (คือทั้งหมด)
+                const reqRoom = currentRole === 'admin' ? 'admin' : currentUser.room;
+                
+                // Fetch transactions and students concurrently
+                const p1 = callBackend('getTransactions', { room: reqRoom });
+                const p2 = callBackend('getStudents', { room: reqRoom });
+                
+                const [res1, res2] = await Promise.all([p1, p2]);
+                
+                if (res1.status === 'success') {
+                    transactions = res1.data;
+                }
+                if (res2.status === 'success') {
+                    students = res2.students;
+                }
+                
+                renderStudentList();
+                renderWithdrawStudentList(false); // Update withdraw list as well
+                if (document.getElementById('view-fast-deposit').classList.contains('hidden') === false) renderFastDepositTable();
+                if (document.getElementById('view-history').classList.contains('hidden') === false) renderHistory();
+                if (document.getElementById('view-balance-search').classList.contains('hidden') === false) renderBalanceSearch();
+                if (document.getElementById('view-summary-student').classList.contains('hidden') === false) renderStudentSummary();
+                if (document.getElementById('view-summary-room').classList.contains('hidden') === false) renderRoomSummary();
+                if (document.getElementById('view-summary-teacher').classList.contains('hidden') === false) renderTeacherSummary();
+
+                return true;
+            } catch (err) {
+                console.error('Load transactions failed', err);
+                return false;   // ให้ผู้เรียกรู้ว่าโหลดไม่สำเร็จ จะได้ไม่บอกผู้ใช้ว่าอัปเดตแล้วทั้งที่ยังเป็นข้อมูลเก่า
+            }
+        }
+
+        async function refreshTransactions() {
+            Swal.fire({ title: 'กำลังโหลดข้อมูลใหม่...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            await loadTransactions();
+            Swal.fire({ icon: 'success', title: 'อัปเดตข้อมูลแล้ว', timer: 1000, showConfirmButton: false });
+        }
+
+        /**
+         * แกนกลางของปุ่มรีเฟรชแบบไอคอน — ดึงรายการและรายชื่อใหม่จากชีต โดยไม่ต้องออกแล้วเข้าระบบใหม่
+         * (เปิดหน้าค้างไว้นานๆ ตัวเลขจะเป็นของรอบที่ล็อกอิน ปุ่มนี้ดึงของล่าสุดมาแทน)
+         *
+         * @param {string} btnId       ปุ่มที่กด — ใช้หมุนไอคอนและกันกดซ้ำระหว่างรอ
+         * @param {Function} [afterOk] งานเพิ่มเติมเฉพาะหน้านั้น หลังข้อมูลใหม่มาถึงแล้ว
+         */
+        async function refreshData(btnId, afterOk) {
+            const btn = document.getElementById(btnId);
+            const spinner = btn ? btn.querySelector('i') : null;
+
+            if (btn) btn.disabled = true;
+            if (spinner) spinner.classList.add('fa-spin');
+
+            try {
+                const ok = await loadTransactions();
+                if (afterOk) afterOk();
+
+                if (ok) {
+                    Swal.fire({ icon: 'success', title: 'อัปเดตข้อมูลแล้ว', timer: 1000, showConfirmButton: false });
+                } else {
+                    Swal.fire({ icon: 'error', title: 'โหลดข้อมูลใหม่ไม่สำเร็จ', text: 'ตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วลองอีกครั้ง ตัวเลขที่เห็นอยู่ยังเป็นข้อมูลเดิม', confirmButtonColor: '#16a34a' });
+                }
+            } finally {
+                if (btn) btn.disabled = false;
+                if (spinner) spinner.classList.remove('fa-spin');
+            }
+        }
+
+        /** ปุ่มรีเฟรชหน้ารับฝากขยะ — loadTransactions() วาดรายชื่อและยอดสะสมใหม่ให้เองอยู่แล้ว */
+        function refreshDepositData() {
+            return refreshData('btnRefreshDeposit');
+        }
+
+        /** นับแถวที่กรอกค้างไว้แต่ยังไม่ได้บันทึกในหน้ารับฝากด่วน */
+        function countPendingFastDeposit() {
+            let n = 0;
+            fastDepositFilteredStudents.slice(0, 30).forEach(s => {
+                const waste = document.getElementById(`fd-waste-${s.id}`);
+                const weight = document.getElementById(`fd-weight-${s.id}`);
+                if (waste && weight && waste.value !== '' && parseFloat(weight.value) > 0) n++;
+            });
+            return n;
+        }
+
+        /**
+         * ปุ่มรีเฟรชหน้ารับฝากด่วน
+         * ตารางถูกวาดใหม่ทั้งหมดตอนโหลด ค่าที่กรอกค้างไว้จะหายไปด้วย จึงต้องถามก่อน
+         */
+        async function refreshFastDepositData() {
+            const pending = countPendingFastDeposit();
+            if (pending > 0) {
+                const confirm = await Swal.fire({
+                    icon: 'warning',
+                    title: 'มีรายการที่ยังไม่ได้บันทึก',
+                    text: `กรอกน้ำหนักค้างไว้ ${pending} รายการ ถ้าโหลดข้อมูลใหม่ตอนนี้ ค่าที่กรอกจะหายทั้งหมด`,
+                    showCancelButton: true,
+                    confirmButtonText: 'โหลดใหม่ (ทิ้งค่าที่กรอก)',
+                    cancelButtonText: 'ยกเลิก',
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#16a34a'
+                });
+                if (!confirm.isConfirmed) return;
+            }
+            return refreshData('btnRefreshFastDeposit');
+        }
+
+        function renderHistory() {
+            const tbody = document.getElementById('historyTableBody');
+            const filterDateStr = document.getElementById('filterDate').value;
+            const filterText = document.getElementById('filterText').value.toLowerCase();
+
+            tbody.innerHTML = '';
+            let sumP = 0, sumW = 0;
+
+            let filtered = visibleTransactions().filter(t => {
+                let tDate = extractDateString(t.date);
+                const matchDate = tDate === filterDateStr;
+                const matchText = filterText === '' || t.studentName.toLowerCase().includes(filterText) || t.studentId.toString().includes(filterText);
+                return matchDate && matchText;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-vintage-400 text-sm">ไม่พบประวัติในเงื่อนไขนี้</td></tr>';
+            } else {
+                filtered.forEach(t => {
+                    let timeOnly = '';
+                    try { timeOnly = new Date(t.timestamp).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }); } catch (e) { }
+                    sumP += parseFloat(t.price) || 0;
+                    sumW += parseFloat(t.weight) || 0;
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-vintage-50/50 transition-colors';
+                    tr.innerHTML = `
+            <td class="py-3 px-4 text-vintage-500">${timeOnly}</td>
+            <td class="py-3 px-4">
+               <div class="font-medium text-vintage-800">${t.studentName}</div>
+               <div class="text-xs text-vintage-500">รหัส: ${t.studentId}</div>
+            </td>
+            <td class="py-3 px-4 text-vintage-700">${t.wasteType}</td>
+            <td class="py-3 px-4 text-right font-medium">${t.weight ? parseFloat(t.weight).toFixed(2) : '-'}</td>
+            <td class="py-3 px-4 text-right font-semibold ${parseFloat(t.price) > 0 ? 'text-green-700' : 'text-red-500'}">${parseFloat(t.price) > 0 ? '+฿' + parseFloat(t.price).toFixed(2) : (parseFloat(t.price) < 0 ? '-฿' + Math.abs(parseFloat(t.price)).toFixed(2) : '-')}</td>
+            <td class="py-3 px-4 text-center">
+                <button onclick="deleteTx('${t.txId || ''}')" class="text-red-400 hover:text-red-600 transition" title="ลบรายการ">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </td>
+          `;
+                    tbody.appendChild(tr);
+                });
+            }
+            document.getElementById('sumPrice').innerText = sumP.toFixed(2);
+            document.getElementById('sumWeight').innerText = sumW.toFixed(2);
+        }
+
+        async function deleteTx(txId) {
+            if (!txId) return Swal.fire({ icon: 'error', title: 'ลบไม่ได้', text: 'รายการนี้เป็นข้อมูลเก่าที่ไม่มีรหัสทำรายการ', confirmButtonColor: '#16a34a' });
+
+            Swal.fire({
+                title: 'ยืนยันการลบรายการ?',
+                text: "คุณต้องการลบประวัติการรับฝากนี้ใช่หรือไม่? การกระทำนี้ไม่สามารถกู้คืนได้",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'ลบข้อมูล',
+                cancelButtonText: 'ยกเลิก'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({ title: 'กำลังลบข้อมูล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                    try {
+                        let res = await callBackend('deleteTransaction', { txId: txId });
+                        if (res.status === 'success') {
+                            Swal.fire({ icon: 'success', title: 'ลบสำเร็จ', text: 'ลบรายการเรียบร้อยแล้ว', timer: 1500, showConfirmButton: false });
+                            loadTransactions();
+                        } else {
+                            Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: res.message, confirmButtonColor: '#16a34a' });
+                        }
+                    } catch (err) {
+                        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: err.toString(), confirmButtonColor: '#16a34a' });
+                    }
+                }
+            });
+        }
+
+        // ================= S U M M A R Y =================
+        function initStudentSummary() {
+            const select = document.getElementById('summaryStudentSelect');
+            // ครูเห็นเฉพาะนักเรียนห้องตัวเองและครูประจำชั้นห้องเดียวกัน ส่วนแอดมินเห็นทุกคน
+            const list = visibleStudents();
+            if (select.options.length <= 1 && list.length > 0) {
+                list.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.text = `${s.id} - ${s.title}${s.name} ${s.surname}`;
+                    select.appendChild(opt);
+                });
+            }
+            renderStudentSummary();
+        }
+
+        function renderStudentSummary() {
+            const studentId = document.getElementById('summaryStudentSelect').value;
+            const tbody = document.getElementById('studentSummaryTableBody');
+
+            if (!studentId) {
+                tbody.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-vintage-400">กรุณาเลือกรหัสนักเรียน</td></tr>';
+                if (studentChart) studentChart.destroy();
+                document.getElementById('ind-total-weight').innerText = '0.00';
+                document.getElementById('ind-total-money').innerText = '0.00';
+                document.getElementById('ind-total-points').innerText = '0';
+                document.getElementById('ind-current-points').innerText = '0';
+                document.getElementById('ind-spent-points').innerText = '0';
+                return;
+            }
+
+            const studentTx = transactions.filter(t => t.studentId.toString() === studentId);
+            let totalW = 0, totalM = 0, totalP = 0;
+            let runningM = 0, runningP = 0;
+            const dateMap = {};
+
+            tbody.innerHTML = '';
+            if (studentTx.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-vintage-400">ไม่มีประวัติการทำรายการ</td></tr>';
+            } else {
+                const sortedTx = [...studentTx].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+                sortedTx.forEach(t => {
+                    let dStr = extractDateString(t.date);
+                    let w = parseFloat(t.weight) || 0;
+                    let m = parseFloat(t.price) || 0;
+                    let p = parseInt(t.points) || 0;
+
+                    totalW += w;
+                    totalM += m;
+                    totalP += p;
+
+                    runningM += m;
+                    runningP += p;
+
+                    if (!dateMap[dStr]) dateMap[dStr] = { weight: 0, money: 0 };
+                    dateMap[dStr].weight += w;
+                    dateMap[dStr].money += m;
+
+                    let pointsHtml = '';
+                    if (p > 0) {
+                        pointsHtml = `<span class="text-gold-600 font-bold">+${p}</span>`;
+                    } else if (p < 0) {
+                        pointsHtml = `<span class="text-red-500 font-bold">${p}</span>`;
+                    } else {
+                        pointsHtml = `<span class="text-vintage-400 font-bold">0</span>`;
+                    }
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                    <td class="py-3 px-4 text-vintage-600">${dStr}</td>
+                    <td class="py-3 px-4 text-vintage-800">${t.wasteType}</td>
+                    <td class="py-3 px-4 text-right font-medium">${w > 0 ? w.toFixed(2) : '-'}</td>
+                    <td class="py-3 px-4 text-right font-semibold ${m > 0 ? 'text-green-700' : (m < 0 ? 'text-red-500' : 'text-vintage-400')}">${m > 0 ? '+฿' + m.toFixed(2) : (m < 0 ? '-฿' + Math.abs(m).toFixed(2) : '-')}</td>
+                    <td class="py-3 px-4 text-right font-bold text-green-800 bg-green-50/30">฿${runningM.toFixed(2)}</td>
+                    <td class="py-3 px-4 text-right">${pointsHtml}</td>
+                    <td class="py-3 px-4 text-right font-bold text-gold-700 bg-yellow-50/30">${runningP} <i class="fa-solid fa-star text-[10px]"></i></td>
+                `;
+                    tbody.prepend(tr);
+                });
+            }
+
+            // คำนวณแต้มที่ใช้สร้างเกาะและซื้อตัวละคร
+            const selectedStudentData = students.find(s => s.id.toString() === studentId);
+            let spentPoints = 0;
+            const ITEM_COSTS = { 'flower': 10, 'bush': 15, 'tree': 30, 'birdhouse': 40, 'solar': 80, 'windmill': 100, 'fountain': 150, 'expand': 150, 'mysterybox': 50, 'goldentree': 50, 'crystal': 50, 'castle': 50, 'snowman': 50 };
+            const RG_CHAR_COSTS = [0, 50, 80, 150];
+
+            if (selectedStudentData) {
+                // 1. หักแต้มจากเกม Eco Valley (สร้างเกาะ)
+                if (selectedStudentData.gameState) {
+                    try {
+                        const grid = JSON.parse(selectedStudentData.gameState);
+                        if (Array.isArray(grid) && grid.length > 0) {
+                            const cols = grid.length;
+                            const rows = grid[0].length;
+                            // นับค่าของใน grid
+                            for (let x = 0; x < cols; x++) {
+                                for (let y = 0; y < rows; y++) {
+                                    if (grid[x][y] && ITEM_COSTS[grid[x][y]]) {
+                                        spentPoints += ITEM_COSTS[grid[x][y]];
+                                    }
+                                }
+                            }
+                            // นับค่าซื้อที่ดิน (ขยายเกิน 5 คอลัมน์)
+                            const extraCols = Math.max(0, cols - 5);
+                            spentPoints += (extraCols * ITEM_COSTS['expand']);
+                        }
+                    } catch (e) { }
+                }
+
+                // 2. หักแต้มจากเกม RecycleHero (ซื้อตัวละคร)
+                if (selectedStudentData.recycleState) {
+                    try {
+                        const rState = JSON.parse(selectedStudentData.recycleState);
+                        console.log('--- RecycleHero Data for', selectedStudentData.id, '---');
+                        console.log('rState:', rState);
+                        if (rState.unlockedChars && Array.isArray(rState.unlockedChars)) {
+                            rState.unlockedChars.forEach(ch => {
+                                if (RG_CHAR_COSTS[ch]) {
+                                    console.log(' - Added cost for char', ch, ':', RG_CHAR_COSTS[ch]);
+                                    spentPoints += RG_CHAR_COSTS[ch];
+                                }
+                            });
+                        }
+                    } catch (e) {}
+                }
+            }
+
+            const currentPoints = totalP - spentPoints;
+
+            document.getElementById('ind-total-weight').innerText = totalW.toFixed(2);
+            document.getElementById('ind-total-money').innerText = totalM.toFixed(2);
+            document.getElementById('ind-total-points').innerText = totalP;
+
+            document.getElementById('ind-spent-points').innerText = spentPoints;
+            document.getElementById('ind-current-points').innerText = currentPoints;
+
+            renderStudentChart(dateMap);
+        }
+
+        function renderStudentChart(dateMap) {
+            const ctx = document.getElementById('studentChart').getContext('2d');
+            if (studentChart) studentChart.destroy();
+
+            const labels = Object.keys(dateMap).sort();
+            const dataWeight = labels.map(l => dateMap[l].weight);
+            const dataMoney = labels.map(l => dateMap[l].money);
+
+            Chart.defaults.font.family = "'Sarabun', sans-serif";
+            Chart.defaults.color = '#14532d';
+
+            studentChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'น้ำหนัก (กก.)',
+                            data: dataWeight,
+                            backgroundColor: 'rgba(34, 197, 94, 0.7)', // Green
+                            borderColor: '#22c55e',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'รายได้ (บาท)',
+                            data: dataMoney,
+                            type: 'line',
+                            fill: false,
+                            borderColor: '#c5a059', // Antique Gold
+                            tension: 0.3,
+                            borderWidth: 3,
+                            pointBackgroundColor: '#fff',
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'น้ำหนัก (กก.)' }, grid: { color: '#f5ebe9' } },
+                        y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'รายได้ (บาท)' } }
+                    }
+                }
+            });
+        }
+
+        function initRoomSummary() {
+            const container = document.getElementById('summaryRoomSelectContainer');
+            const refreshBtnOnly = document.getElementById('summaryRoomRefreshBtnOnly');
+            const select = document.getElementById('summaryRoomSelect');
+            
+            // ถ้าเป็น Admin ให้เปิดการมองเห็น Dropdown และใส่ข้อมูลห้อง
+            if (currentRole === 'admin') {
+                container.classList.remove('hidden');
+                refreshBtnOnly.classList.add('hidden');
+                if (select.options.length <= 1 && students.length > 0) {
+                    // ดึงรายชื่อห้องทั้งหมดที่ไม่ซ้ำกันจากรายชื่อนักเรียน
+                    const uniqueRooms = [...new Set(students.map(s => s.room))].filter(Boolean).sort();
+                    uniqueRooms.forEach(r => {
+                        const opt = document.createElement('option');
+                        opt.value = r;
+                        opt.text = `ห้อง ${r}`;
+                        select.appendChild(opt);
+                    });
+                }
+            } else {
+                container.classList.add('hidden');
+                refreshBtnOnly.classList.remove('hidden');
+            }
+            renderRoomSummary();
+        }
+
+        function renderRoomSummary() {
+            let totalW = 0, totalM = 0, totalP = 0;
+            const dateMap = {};
+            const topStudentsMap = {}; // ตัวแปรสำหรับเก็บยอดรวมรายคน
+            const tbody = document.getElementById('roomSummaryTableBody');
+            tbody.innerHTML = '';
+
+            const select = document.getElementById('summaryRoomSelect');
+            const selectedRoom = currentRole === 'admin' ? select.value : currentUser.room;
+
+            // กรองข้อมูลตามห้องที่เลือก (ไม่เอาครู)
+            let filteredTx = transactions.filter(t => {
+                const s = students.find(st => st.id == t.studentId);
+                return !(s && s.isTeacher);
+            });
+            
+            if (selectedRoom !== 'all' && currentRole === 'admin') {
+                filteredTx = filteredTx.filter(t => t.room === selectedRoom);
+            }
+
+            if (filteredTx.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="py-6 text-center text-vintage-400">ยังไม่มีข้อมูลการรับฝาก</td></tr>';
+                document.getElementById('room-total-weight').innerText = '0.00';
+                document.getElementById('room-total-money').innerText = '0.00';
+                document.getElementById('room-total-points').innerText = '0';
+                document.getElementById('top5Container').innerHTML = '<div class="text-center text-vintage-400 text-sm py-4 bg-white/50 rounded-lg border border-vintage-100">ยังไม่มีข้อมูล</div>';
+                if (roomChart) roomChart.destroy();
+                return;
+            }
+
+            filteredTx.forEach(t => {
+                if (t.wasteType === "ถอนเงินออก") return; // ไม่นำการถอนเงินมาคำนวณในรายได้รวม
+
+                let dStr = extractDateString(t.date);
+                let w = parseFloat(t.weight) || 0;
+                let m = parseFloat(t.price) || 0;
+                let p = parseInt(t.points) || 0;
+
+                totalW += w;
+                totalM += m;
+                totalP += p;
+
+                if (!dateMap[dStr]) dateMap[dStr] = { count: 0, weight: 0, money: 0 };
+                dateMap[dStr].count += 1;
+                dateMap[dStr].weight += w;
+                dateMap[dStr].money += m;
+
+                // รวบรวมข้อมูลรายคน สำหรับ Top 5
+                if (!topStudentsMap[t.studentId]) {
+                    topStudentsMap[t.studentId] = { name: t.studentName, money: 0, weight: 0 };
+                }
+                topStudentsMap[t.studentId].money += m;
+                topStudentsMap[t.studentId].weight += w;
+            });
+
+            document.getElementById('room-total-weight').innerText = totalW.toFixed(2);
+            document.getElementById('room-total-money').innerText = totalM.toFixed(2);
+            document.getElementById('room-total-points').innerText = totalP;
+
+            const sortedDates = Object.keys(dateMap).sort((a, b) => new Date(b) - new Date(a));
+
+            sortedDates.forEach(d => {
+                const data = dateMap[d];
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-vintage-50 transition-colors';
+                tr.innerHTML = `
+                <td class="py-3 px-4 font-semibold text-vintage-800">${d}</td>
+                <td class="py-3 px-4 text-center text-vintage-600">${data.count}</td>
+                <td class="py-3 px-4 text-right text-vintage-700">${data.weight.toFixed(2)}</td>
+                <td class="py-3 px-4 text-right text-green-700 font-bold">฿${data.money.toFixed(2)}</td>
+            `;
+                tbody.appendChild(tr);
+            });
+
+            renderRoomChart(dateMap);
+
+            // คำนวณและเรียกใช้ฟังก์ชันวาด Top 5
+            const topStudents = Object.values(topStudentsMap)
+                .sort((a, b) => b.money - a.money)
+                .slice(0, 5);
+            renderTop5(topStudents);
+        }
+
+        function renderTop5(topStudents) {
+            const container = document.getElementById('top5Container');
+            container.innerHTML = '';
+
+            if (topStudents.length === 0) {
+                container.innerHTML = '<div class="text-center text-vintage-400 text-sm py-4 bg-white/50 rounded-lg border border-vintage-100">ยังไม่มีข้อมูล</div>';
+                return;
+            }
+
+            topStudents.forEach((student, index) => {
+                let rankStyle = '';
+                let icon = '';
+
+                // สไตล์สำหรับเหรียญทอง เงิน ทองแดง และอันดับ 4-5
+                if (index === 0) {
+                    rankStyle = 'bg-gradient-to-br from-yellow-300 to-yellow-500 text-white shadow-md border-yellow-600';
+                    icon = '<i class="fa-solid fa-crown text-yellow-100 text-[10px] absolute -top-1.5 -right-1.5 transform rotate-12"></i>';
+                } else if (index === 1) {
+                    rankStyle = 'bg-gradient-to-br from-gray-300 to-gray-400 text-white shadow-sm border-gray-400';
+                } else if (index === 2) {
+                    rankStyle = 'bg-gradient-to-br from-orange-300 to-orange-400 text-white shadow-sm border-orange-500'; // ทองแดง
+                } else {
+                    rankStyle = 'bg-vintage-100 text-vintage-600 border-vintage-200';
+                }
+
+                // เพิ่มดีเลย์ตอนโผล่ขึ้นมาให้ดูสมูทขึ้น
+                const delay = index * 100;
+
+                const html = `
+                <div class="bg-white rounded-lg p-3 border border-vintage-200 flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden fade-in" style="animation-delay: ${delay}ms; opacity: 0; animation-fill-mode: forwards;">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm border relative shrink-0 ${rankStyle}">
+                        ${index + 1}
+                        ${icon}
+                    </div>
+                    <div class="flex-grow min-w-0">
+                        <div class="text-sm font-semibold text-vintage-800 truncate">${student.name}</div>
+                        <div class="text-[10px] text-vintage-500 font-medium">รวม: ${student.weight.toFixed(2)} กก.</div>
+                    </div>
+                    <div class="text-right shrink-0 pl-2 border-l border-vintage-100">
+                        <div class="text-[10px] text-vintage-400 mb-0.5">รายได้</div>
+                        <div class="font-bold text-green-700 text-sm leading-none">฿${student.money.toFixed(2)}</div>
+                    </div>
+                </div>
+            `;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        function renderRoomChart(dateMap) {
+            const ctx = document.getElementById('roomChart').getContext('2d');
+            if (roomChart) roomChart.destroy();
+
+            const labels = Object.keys(dateMap).sort();
+            const dataMoney = labels.map(l => dateMap[l].money);
+
+            Chart.defaults.font.family = "'Sarabun', sans-serif";
+            Chart.defaults.color = '#14532d';
+
+            roomChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'ยอดเงินรวมรายวัน (บาท)',
+                            data: dataMoney,
+                            backgroundColor: 'rgba(197, 160, 89, 0.7)', // Antique Gold
+                            borderColor: '#c5a059',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top' } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f5ebe9' } },
+                        x: { grid: { color: 'transparent' } }
+                    }
+                }
+            });
+        }
+
+        let teacherChart = null;
+        function renderTeacherSummary() {
+            let totalW = 0, totalM = 0, totalP = 0;
+            const dateMap = {};
+            const topTeachersMap = {}; 
+            const tbody = document.getElementById('teacherSummaryTableBody');
+            tbody.innerHTML = '';
+
+            // กรองเฉพาะครู
+            let filteredTx = transactions.filter(t => {
+                const s = students.find(st => st.id == t.studentId);
+                return s && s.isTeacher;
+            });
+
+            if (filteredTx.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="py-6 text-center text-vintage-400">ยังไม่มีข้อมูลการรับฝาก</td></tr>';
+                document.getElementById('teacher-total-weight').innerText = '0.00';
+                document.getElementById('teacher-total-money').innerText = '0.00';
+                document.getElementById('teacher-total-points').innerText = '0';
+                document.getElementById('teacherTop5Container').innerHTML = '<div class="text-center text-vintage-400 text-sm py-4 bg-white/50 rounded-lg border border-vintage-100">ยังไม่มีข้อมูล</div>';
+                if (teacherChart) teacherChart.destroy();
+                return;
+            }
+
+            filteredTx.forEach(t => {
+                if (t.wasteType === "ถอนเงินออก") return; // ไม่นำการถอนเงินมาคำนวณในรายได้รวม
+
+                let dStr = extractDateString(t.date);
+                let w = parseFloat(t.weight) || 0;
+                let m = parseFloat(t.price) || 0;
+                let p = parseInt(t.points) || 0;
+
+                totalW += w;
+                totalM += m;
+                totalP += p;
+
+                if (!dateMap[dStr]) dateMap[dStr] = { count: 0, weight: 0, money: 0 };
+                dateMap[dStr].count += 1;
+                dateMap[dStr].weight += w;
+                dateMap[dStr].money += m;
+
+                if (!topTeachersMap[t.studentId]) {
+                    topTeachersMap[t.studentId] = { name: t.studentName, money: 0, weight: 0 };
+                }
+                topTeachersMap[t.studentId].money += m;
+                topTeachersMap[t.studentId].weight += w;
+            });
+
+            document.getElementById('teacher-total-weight').innerText = totalW.toFixed(2);
+            document.getElementById('teacher-total-money').innerText = totalM.toFixed(2);
+            document.getElementById('teacher-total-points').innerText = totalP;
+
+            const sortedDates = Object.keys(dateMap).sort((a, b) => new Date(b) - new Date(a));
+
+            sortedDates.forEach(d => {
+                const data = dateMap[d];
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-vintage-50 transition-colors';
+                tr.innerHTML = `
+                <td class="py-3 px-4 font-semibold text-vintage-800">${d}</td>
+                <td class="py-3 px-4 text-center text-vintage-600">${data.count}</td>
+                <td class="py-3 px-4 text-right text-vintage-700">${data.weight.toFixed(2)}</td>
+                <td class="py-3 px-4 text-right text-green-700 font-bold">฿${data.money.toFixed(2)}</td>
+            `;
+                tbody.appendChild(tr);
+            });
+
+            renderTeacherChart(dateMap);
+
+            const topTeachers = Object.values(topTeachersMap)
+                .sort((a, b) => b.money - a.money)
+                .slice(0, 5);
+            renderTeacherTop5(topTeachers);
+        }
+
+        function renderTeacherTop5(topTeachers) {
+            const container = document.getElementById('teacherTop5Container');
+            container.innerHTML = '';
+
+            if (topTeachers.length === 0) {
+                container.innerHTML = '<div class="text-center text-vintage-400 text-sm py-4 bg-white/50 rounded-lg border border-vintage-100">ยังไม่มีข้อมูล</div>';
+                return;
+            }
+
+            topTeachers.forEach((teacher, index) => {
+                let rankStyle = '';
+                let icon = '';
+
+                if (index === 0) {
+                    rankStyle = 'bg-gradient-to-br from-yellow-300 to-yellow-500 text-white shadow-md border-yellow-600';
+                    icon = '<i class="fa-solid fa-crown text-yellow-100 text-[10px] absolute -top-1.5 -right-1.5 transform rotate-12"></i>';
+                } else if (index === 1) {
+                    rankStyle = 'bg-gradient-to-br from-gray-300 to-gray-400 text-white shadow-sm border-gray-400';
+                } else if (index === 2) {
+                    rankStyle = 'bg-gradient-to-br from-orange-300 to-orange-400 text-white shadow-sm border-orange-500';
+                } else {
+                    rankStyle = 'bg-vintage-100 text-vintage-600 border-vintage-200';
+                }
+
+                const delay = index * 100;
+                const html = `
+                <div class="bg-white rounded-lg p-3 border border-vintage-200 flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden fade-in" style="animation-delay: ${delay}ms; opacity: 0; animation-fill-mode: forwards;">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm border relative shrink-0 ${rankStyle}">
+                        ${index + 1}
+                        ${icon}
+                    </div>
+                    <div class="flex-grow min-w-0">
+                        <div class="text-sm font-semibold text-vintage-800 truncate">${teacher.name}</div>
+                        <div class="text-[10px] text-vintage-500 font-medium">รวม: ${teacher.weight.toFixed(2)} กก.</div>
+                    </div>
+                    <div class="text-right shrink-0 pl-2 border-l border-vintage-100">
+                        <div class="text-[10px] text-vintage-400 mb-0.5">รายได้</div>
+                        <div class="font-bold text-green-700 text-sm leading-none">฿${teacher.money.toFixed(2)}</div>
+                    </div>
+                </div>
+            `;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        function renderTeacherChart(dateMap) {
+            const ctx = document.getElementById('teacherChart').getContext('2d');
+            if (teacherChart) teacherChart.destroy();
+
+            const labels = Object.keys(dateMap).sort();
+            const dataMoney = labels.map(l => dateMap[l].money);
+
+            Chart.defaults.font.family = "'Sarabun', sans-serif";
+            Chart.defaults.color = '#14532d';
+
+            teacherChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'ยอดเงินรวมรายวัน (บาท)',
+                            data: dataMoney,
+                            backgroundColor: 'rgba(59, 130, 246, 0.7)', // Blue
+                            borderColor: '#3b82f6',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top' } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f5ebe9' } },
+                        x: { grid: { color: 'transparent' } }
+                    }
+                }
+            });
+        }
+
+        // ================= S E T T I N G S =================
+        function renderSettingsWasteList() {
+            const list = document.getElementById('settingsWasteList');
+            list.innerHTML = '';
+
+            if (wasteTypes.length === 0) {
+                list.innerHTML = '<div class="text-vintage-400 text-sm py-4">ยังไม่มีข้อมูลประเภทขยะ</div>';
+                return;
+            }
+
+            wasteTypes.forEach(t => {
+                list.innerHTML += `
+          <div class="border border-vintage-200 bg-white p-4 rounded-lg shadow-sm flex items-center justify-between">
+             <div>
+               <div class="font-bold text-vintage-800 text-sm">${t.name}</div>
+               <div class="text-xs text-vintage-500 mt-1">รหัส: ${t.id}</div>
+             </div>
+             <div class="flex items-center gap-4">
+               <div class="text-right">
+                 <div class="text-sm font-bold text-vintage-700">฿${t.price}/กก.</div>
+                 <div class="text-xs text-gold-600 mt-1 font-medium"><i class="fa-solid fa-star"></i> ${t.points} แต้ม</div>
+               </div>
+               <div class="flex flex-col gap-2 border-l border-vintage-200 pl-3">
+                 <button onclick="editWasteType('${t.id}')" class="text-blue-500 hover:text-blue-700 transition text-sm" title="แก้ไข">
+                   <i class="fa-solid fa-pen-to-square"></i>
+                 </button>
+                 <button onclick="deleteWasteType('${t.id}')" class="text-red-400 hover:text-red-600 transition text-sm" title="ลบ">
+                   <i class="fa-solid fa-trash-can"></i>
+                 </button>
+               </div>
+             </div>
+          </div>
+        `;
+            });
+        }
+
+        async function addWasteType() {
+            const name = document.getElementById('wName').value;
+            const price = document.getElementById('wPrice').value;
+            const points = document.getElementById('wPoints').value;
+
+            const btn = document.querySelector('#addWasteForm button');
+            btn.innerHTML = '<i class="fa-solid fa-hourglass-half fa-spin"></i> กำลังบันทึก...';
+            btn.disabled = true;
+
+            try {
+                let res = await callBackend('saveWasteType', { data: { name, price, points } });
+                if (res.status === 'success') {
+                    document.getElementById('addWasteForm').reset();
+                    Swal.fire({ icon: 'success', title: 'สำเร็จ', text: 'เพิ่มประเภทขยะเรียบร้อย', confirmButtonColor: '#16a34a' });
+                    loadWasteTypes();
+                } else {
+                    Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: res.message, confirmButtonColor: '#16a34a' });
+                }
+            } catch (err) {
+                Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: err.toString(), confirmButtonColor: '#16a34a' });
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-plus"></i> บันทึกเข้าระบบ';
+                btn.disabled = false;
+            }
+        }
+
+        async function editWasteType(id) {
+            const waste = wasteTypes.find(w => w.id.toString() === id.toString());
+            if (!waste) return;
+
+            const { value: formValues } = await Swal.fire({
+                title: 'แก้ไขประเภทขยะ',
+                html:
+                    `<div class="text-left">
+                        <label class="block text-sm text-vintage-700 mb-1">ชื่อประเภทขยะ</label>
+                        <input id="swal-wName" class="swal2-input !w-full !m-0 !mb-3" value="${waste.name}">
+                        <label class="block text-sm text-vintage-700 mb-1">ราคา (บาท/กก.)</label>
+                        <input id="swal-wPrice" type="number" step="0.01" class="swal2-input !w-full !m-0 !mb-3" value="${waste.price}">
+                        <label class="block text-sm text-vintage-700 mb-1">แต้มสะสม (/กก.)</label>
+                        <input id="swal-wPoints" type="number" class="swal2-input !w-full !m-0" value="${waste.points}">
+                    </div>`,
+                focusConfirm: false,
+                showCancelButton: true,
+                confirmButtonText: 'บันทึก',
+                cancelButtonText: 'ยกเลิก',
+                confirmButtonColor: '#16a34a',
+                preConfirm: () => {
+                    return {
+                        id: id,
+                        name: document.getElementById('swal-wName').value,
+                        price: document.getElementById('swal-wPrice').value,
+                        points: document.getElementById('swal-wPoints').value
+                    }
+                }
+            });
+
+            if (formValues) {
+                Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                try {
+                    let res = await callBackend('editWasteType', { data: formValues });
+                    if (res.status === 'success') {
+                        Swal.fire({ icon: 'success', title: 'สำเร็จ', text: 'แก้ไขประเภทขยะเรียบร้อย', timer: 1500, showConfirmButton: false });
+                        loadWasteTypes();
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: res.message, confirmButtonColor: '#16a34a' });
+                    }
+                } catch (err) {
+                    Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: err.toString(), confirmButtonColor: '#16a34a' });
+                }
+            }
+        }
+
+        async function deleteWasteType(id) {
+            Swal.fire({
+                title: 'ยืนยันการลบ?',
+                text: "คุณต้องการลบประเภทขยะนี้ใช่หรือไม่? ข้อมูลการรับฝากเดิมจะยังคงอยู่",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'ลบ',
+                cancelButtonText: 'ยกเลิก'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({ title: 'กำลังลบ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                    try {
+                        let res = await callBackend('deleteWasteType', { id: id });
+                        if (res.status === 'success') {
+                            Swal.fire({ icon: 'success', title: 'สำเร็จ', text: 'ลบประเภทขยะเรียบร้อย', timer: 1500, showConfirmButton: false });
+                            loadWasteTypes();
+                        } else {
+                            Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: res.message, confirmButtonColor: '#16a34a' });
+                        }
+                    } catch (err) {
+                        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: err.toString(), confirmButtonColor: '#16a34a' });
+                    }
+                }
+            });
+        }
+        function generateReport() {
+            const startDateStr = document.getElementById('reportStartDate').value;
+            const endDateStr = document.getElementById('reportEndDate').value;
+
+            if (!startDateStr || !endDateStr) {
+                Swal.fire({ icon: 'warning', title: 'กรุณาเลือกช่วงวันที่', confirmButtonColor: '#16a34a' });
+                return;
+            }
+
+            const startDate = new Date(startDateStr);
+            startDate.setHours(0, 0, 0, 0);
+            const endDate = new Date(endDateStr);
+            endDate.setHours(23, 59, 59, 999);
+
+            const filteredTx = transactions.filter(t => {
+                let tDate = new Date(t.date);
+                return tDate >= startDate && tDate <= endDate;
+            });
+
+            let uniqueDatesSet = new Set();
+            filteredTx.forEach(t => {
+                let d = new Date(t.date);
+                let dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                uniqueDatesSet.add(dateStr);
+            });
+
+            let uniqueDates = Array.from(uniqueDatesSet).sort();
+
+            let reportHtml = `
+            <div class="p-4">
+                <h3 class="text-xl font-bold text-center text-vintage-800 mb-4 vintage-title">รายการรับซื้อตามช่วงเวลา</h3>
+                <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse whitespace-nowrap border border-vintage-200">
+                    <thead>
+                        <tr class="bg-vintage-100 text-vintage-800 text-sm border-b border-vintage-200">
+                            <th class="py-3 px-4 font-semibold border border-vintage-200 text-center">ลำดับ</th>
+                            <th class="py-3 px-4 font-semibold border border-vintage-200">ชื่อ นามสกุลนักเรียน</th>
+            `;
+
+            uniqueDates.forEach((dateStr, index) => {
+                let d = new Date(dateStr);
+                let shortDate = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${(d.getFullYear() + 543).toString().substring(2)}`;
+                reportHtml += `
+                            <th class="py-3 px-4 font-semibold border border-vintage-200 text-right">ครั้งที่ ${index + 1}<br><span class="text-xs font-normal">${shortDate} (กก.)</span></th>
+                            <th class="py-3 px-4 font-semibold border border-vintage-200 text-right">รายได้<br><span class="text-xs font-normal">ครั้งที่ ${index + 1} (฿)</span></th>
+                `;
+            });
+
+            reportHtml += `
+                            <th class="py-3 px-4 font-semibold border border-vintage-200 text-right bg-vintage-50">รวมน้ำหนัก<br><span class="text-xs font-normal">(กก.)</span></th>
+                            <th class="py-3 px-4 font-semibold border border-vintage-200 text-right bg-vintage-50">รวมเป็นเงินทั้งสิ้น<br><span class="text-xs font-normal">(฿)</span></th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm divide-y divide-vintage-100 bg-white">
+            `;
+
+            let count = 1;
+            let sumTotalWeight = 0;
+            let sumTotalMoney = 0;
+            let dateTotals = {};
+            uniqueDates.forEach(d => {
+                dateTotals[d] = { weight: 0, money: 0 };
+            });
+
+            students.filter(s => !s.isTeacher).forEach(student => {
+                const studentTx = filteredTx.filter(t => t.studentId == student.id);
+
+                let rowHtml = `<tr>
+                    <td class="py-2 px-4 border border-vintage-200 text-center">${count++}</td>
+                    <td class="py-2 px-4 border border-vintage-200">${student.title}${student.name} ${student.surname}</td>`;
+
+                let studentTotalWeight = 0;
+                let studentTotalMoney = 0;
+
+                uniqueDates.forEach(dateStr => {
+                    let w = 0;
+                    let m = 0;
+                    studentTx.forEach(t => {
+                        if (t.wasteType === "ถอนเงินออก") return;
+
+                        let d = new Date(t.date);
+                        let tStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                        if (tStr === dateStr) {
+                            w += parseFloat(t.weight) || 0;
+                            m += parseFloat(t.price) || 0;
+                        }
+                    });
+
+                    studentTotalWeight += w;
+                    studentTotalMoney += m;
+                    dateTotals[dateStr].weight += w;
+                    dateTotals[dateStr].money += m;
+
+                    rowHtml += `
+                        <td class="py-2 px-4 border border-vintage-200 text-right">${w > 0 ? w.toFixed(2) : '-'}</td>
+                        <td class="py-2 px-4 border border-vintage-200 text-right">${m > 0 ? m.toFixed(2) : '-'}</td>
+                    `;
+                });
+
+                sumTotalWeight += studentTotalWeight;
+                sumTotalMoney += studentTotalMoney;
+
+                rowHtml += `
+                    <td class="py-2 px-4 border border-vintage-200 text-right font-bold bg-vintage-50">${studentTotalWeight > 0 ? studentTotalWeight.toFixed(2) : '-'}</td>
+                    <td class="py-2 px-4 border border-vintage-200 text-right font-bold text-green-700 bg-vintage-50">${studentTotalMoney > 0 ? studentTotalMoney.toFixed(2) : '-'}</td>
+                </tr>`;
+
+                reportHtml += rowHtml;
+            });
+
+            reportHtml += `
+                    <tr class="bg-vintage-100 font-bold">
+                        <td colspan="2" class="py-3 px-4 border border-vintage-200 text-center">รวมทั้งสิ้น</td>
+            `;
+
+            uniqueDates.forEach(dateStr => {
+                reportHtml += `
+                        <td class="py-3 px-4 border border-vintage-200 text-right">${dateTotals[dateStr].weight.toFixed(2)}</td>
+                        <td class="py-3 px-4 border border-vintage-200 text-right text-green-700">${dateTotals[dateStr].money.toFixed(2)}</td>
+                `;
+            });
+
+            reportHtml += `
+                        <td class="py-3 px-4 border border-vintage-200 text-right">${sumTotalWeight.toFixed(2)}</td>
+                        <td class="py-3 px-4 border border-vintage-200 text-right text-green-700">${sumTotalMoney.toFixed(2)}</td>
+                    </tr>
+                    </tbody>
+                </table>
+                </div>
+            </div>
+            `;
+
+            document.getElementById('reportPlaceholder').classList.add('hidden');
+            const container = document.getElementById('reportContainer');
+            container.innerHTML = reportHtml;
+            container.classList.remove('hidden');
+        }
+        // ================= B A L A N C E   S E A R C H =================
+
+        /**
+         * รวมยอดฝาก / ถอน / คงเหลือ ของทุกคนที่ผู้ใช้มีสิทธิ์เห็น
+         * รายการถอนถูกบันทึกเป็นยอดเงินติดลบไว้ จึงแยกฝาก-ถอนด้วยเครื่องหมายของตัวเลข
+         */
+        function getBalanceRows() {
+            const totals = {};
+            transactions.forEach(t => {
+                const id = String(t.studentId);
+                if (!totals[id]) totals[id] = { deposit: 0, withdraw: 0 };
+
+                const amount = parseFloat(t.price) || 0;
+                if (amount >= 0) totals[id].deposit += amount;
+                else totals[id].withdraw += -amount;
+            });
+
+            return visibleStudents().map(s => {
+                const t = totals[String(s.id)] || { deposit: 0, withdraw: 0 };
+                return {
+                    id: s.id,
+                    fullName: `${s.title}${s.name} ${s.surname}`,
+                    room: s.room,
+                    isTeacher: s.isTeacher,
+                    deposit: t.deposit,
+                    withdraw: t.withdraw,
+                    balance: t.deposit - t.withdraw
+                };
+            });
+        }
+
+        /**
+         * เทียบยอดเงินกับเงื่อนไขที่ผู้ใช้เลือก
+         * ไม่ได้เลือกเงื่อนไข หรือไม่ได้ใส่ตัวเลข = ไม่กรองช่องนั้น
+         */
+        function matchAmountFilter(value, opId, valId) {
+            const op = document.getElementById(opId).value;
+            const raw = document.getElementById(valId).value;
+            if (!op || raw === '') return true;
+
+            const target = parseFloat(raw);
+            if (isNaN(target)) return true;
+
+            // ปัดเป็นทศนิยม 2 ตำแหน่งก่อนเทียบ ให้ตรงกับตัวเลขที่ผู้ใช้เห็นบนหน้าจอ
+            // ไม่งั้น "เท่ากับ 50" จะไม่เจอคนที่ยอดจริงเป็น 49.999999 จากการคูณทศนิยม
+            const v = Math.round(value * 100) / 100;
+
+            switch (op) {
+                case 'gt':  return v > target;
+                case 'gte': return v >= target;
+                case 'eq':  return v === target;
+                case 'lte': return v <= target;
+                case 'lt':  return v < target;
+                default:    return true;
+            }
+        }
+
+        function getFilteredBalanceRows() {
+            const q = document.getElementById('bsSearchText').value.trim().toLowerCase();
+
+            const rows = getBalanceRows().filter(r => {
+                if (q && !(String(r.id).toLowerCase().includes(q) || r.fullName.toLowerCase().includes(q))) return false;
+                if (!matchAmountFilter(r.deposit,  'bsDepositOp',  'bsDepositVal'))  return false;
+                if (!matchAmountFilter(r.withdraw, 'bsWithdrawOp', 'bsWithdrawVal')) return false;
+                if (!matchAmountFilter(r.balance,  'bsBalanceOp',  'bsBalanceVal'))  return false;
+                return true;
+            });
+
+            const sorters = {
+                'balance-desc':  (a, b) => b.balance - a.balance,
+                'balance-asc':   (a, b) => a.balance - b.balance,
+                'deposit-desc':  (a, b) => b.deposit - a.deposit,
+                'withdraw-desc': (a, b) => b.withdraw - a.withdraw,
+                'id-asc':        (a, b) => String(a.id).localeCompare(String(b.id), 'th', { numeric: true }),
+                'name-asc':      (a, b) => a.fullName.localeCompare(b.fullName, 'th')
+            };
+            const sortBy = document.getElementById('bsSortBy').value;
+
+            return rows.sort(sorters[sortBy] || sorters['balance-desc']);
+        }
+
+        function renderBalanceSearch() {
+            const tbody = document.getElementById('balanceSearchTableBody');
+            if (!tbody) return;
+
+            const rows = getFilteredBalanceRows();
+
+            let sumD = 0, sumW = 0;
+            rows.forEach(r => { sumD += r.deposit; sumW += r.withdraw; });
+
+            document.getElementById('bsCount').innerText = rows.length;
+            document.getElementById('bsTotalDeposit').innerText = sumD.toFixed(2);
+            document.getElementById('bsTotalWithdraw').innerText = sumW.toFixed(2);
+            document.getElementById('bsTotalBalance').innerText = (sumD - sumW).toFixed(2);
+
+            if (rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-vintage-400">ไม่พบรายชื่อที่ตรงกับเงื่อนไข</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = rows.map((r, i) => `
+                <tr class="hover:bg-vintage-50 transition-colors">
+                    <td class="py-2.5 px-4 text-center text-vintage-400">${i + 1}</td>
+                    <td class="py-2.5 px-4 text-vintage-600">${r.id}</td>
+                    <td class="py-2.5 px-4 font-medium text-vintage-800">${r.fullName}${r.isTeacher
+                        ? ' <span class="text-[10px] px-1.5 py-0.5 rounded bg-yellow-50 text-gold-600 border border-gold-300">ครู</span>'
+                        : ''}</td>
+                    <td class="py-2.5 px-4 text-vintage-600">${r.room}</td>
+                    <td class="py-2.5 px-4 text-right text-green-700 font-medium">${r.deposit.toFixed(2)}</td>
+                    <td class="py-2.5 px-4 text-right text-red-600">${r.withdraw.toFixed(2)}</td>
+                    <td class="py-2.5 px-4 text-right font-bold text-vintage-800">${r.balance.toFixed(2)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function clearBalanceSearchFilters() {
+            ['bsSearchText', 'bsDepositVal', 'bsWithdrawVal', 'bsBalanceVal'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+            ['bsDepositOp', 'bsWithdrawOp', 'bsBalanceOp'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+            document.getElementById('bsSortBy').value = 'balance-desc';
+            renderBalanceSearch();
+        }
+
+        function refreshBalanceSearchData() {
+            return refreshData('btnRefreshBalanceSearch', renderBalanceSearch);
+        }
+
+        /** สรุปเงื่อนไขที่กรองอยู่เป็นข้อความ ไว้พิมพ์กำกับหัวรายงาน PDF ให้อ่านแล้วรู้ที่มา */
+        function describeBalanceFilters() {
+            const OP_LABEL = { gt: 'มากกว่า', gte: 'ตั้งแต่', eq: 'เท่ากับ', lte: 'ไม่เกิน', lt: 'น้อยกว่า' };
+            const parts = [];
+
+            const q = document.getElementById('bsSearchText').value.trim();
+            if (q) parts.push(`คำค้น "${q}"`);
+
+            [['ยอดฝาก', 'bsDepositOp', 'bsDepositVal'],
+             ['ยอดถอน', 'bsWithdrawOp', 'bsWithdrawVal'],
+             ['ยอดคงเหลือ', 'bsBalanceOp', 'bsBalanceVal']].forEach(f => {
+                const op = document.getElementById(f[1]).value;
+                const val = document.getElementById(f[2]).value;
+                if (op && val !== '') parts.push(`${f[0]} ${OP_LABEL[op]} ${parseFloat(val).toFixed(2)} บาท`);
+            });
+
+            return parts.length ? parts.join('   ·   ') : 'ไม่ได้กรองข้อมูล (แสดงทั้งหมด)';
+        }
+
+        function printBalanceSearchPdf() {
+            const rows = getFilteredBalanceRows();
+            if (rows.length === 0) {
+                return Swal.fire({ icon: 'info', title: 'ไม่มีข้อมูลให้พิมพ์', text: 'ไม่พบรายชื่อที่ตรงกับเงื่อนไขที่กรองอยู่', confirmButtonColor: '#16a34a' });
+            }
+
+            initPdfFonts();
+
+            const head = ['ลำดับ', 'รหัส', 'ชื่อ - นามสกุล', 'ห้อง/ตำแหน่ง', 'ยอดฝาก', 'ยอดถอน', 'คงเหลือ']
+                .map(t => ({ text: t, style: 'tableHeader' }));
+
+            const body = [head];
+            let sumD = 0, sumW = 0;
+
+            rows.forEach((r, i) => {
+                sumD += r.deposit;
+                sumW += r.withdraw;
+                body.push([
+                    { text: String(i + 1), alignment: 'center' },
+                    { text: String(r.id), alignment: 'center' },
+                    { text: r.fullName + (r.isTeacher ? ' (ครู)' : '') },
+                    { text: String(r.room), alignment: 'center' },
+                    { text: r.deposit.toFixed(2), alignment: 'right' },
+                    { text: r.withdraw.toFixed(2), alignment: 'right' },
+                    { text: r.balance.toFixed(2), alignment: 'right' }
+                ]);
+            });
+
+            body.push([
+                { text: `รวม ${rows.length} คน`, colSpan: 4, alignment: 'right', bold: true }, {}, {}, {},
+                { text: sumD.toFixed(2), alignment: 'right', bold: true },
+                { text: sumW.toFixed(2), alignment: 'right', bold: true },
+                { text: (sumD - sumW).toFixed(2), alignment: 'right', bold: true }
+            ]);
+
+            const now = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            const printedAt = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear() + 543} ` +
+                              `เวลา ${pad(now.getHours())}:${pad(now.getMinutes())} น.`;
+
+            pdfMake.createPdf({
+                pageSize: 'A4',
+                pageMargins: [30, 30, 30, 40],
+                defaultStyle: { font: 'THSarabunNew', fontSize: 14 },
+                styles: {
+                    header: { fontSize: 20, bold: true, alignment: 'center' },
+                    // ตัวหนาใช้ฟอนต์ Sarabun-ExtraBold ซึ่งดูใหญ่กว่า THSarabunNew ที่ขนาดเท่ากัน
+                    // จึงลดขนาดหัวตารางลงจากตัวเนื้อหา (14) ให้ดูสมดุลกัน
+                    tableHeader: { bold: true, fontSize: 12, alignment: 'center', fillColor: '#eeeeee' }
+                },
+                content: [
+                    { text: 'รายงานยอดฝาก - ถอน - คงเหลือ รายบุคคล', style: 'header' },
+                    { text: 'โรงเรียนชุมชนวัดไทยงาม', alignment: 'center', margin: [0, 2, 0, 8] },
+                    { text: `เงื่อนไขที่กรอง: ${describeBalanceFilters()}`, alignment: 'center', fontSize: 12 },
+                    {
+                        text: `ผู้พิมพ์: ${currentUser ? currentUser.name : '-'}   ·   พิมพ์เมื่อ ${printedAt}`,
+                        alignment: 'center', fontSize: 12, margin: [0, 2, 0, 10]
+                    },
+                    {
+                        table: {
+                            headerRows: 1,
+                            widths: [30, 45, '*', 60, 60, 60, 60],
+                            body: body
+                        }
+                    }
+                ],
+                footer: (page, total) => ({ text: `หน้า ${page} / ${total}`, alignment: 'center', fontSize: 11, margin: [0, 8, 0, 0] })
+            }).open();
+        }
+
+        /** ลงทะเบียนฟอนต์ไทยให้ pdfMake — ต้องเรียกก่อนสร้าง PDF ทุกครั้ง ไม่งั้นภาษาไทยจะเป็นสี่เหลี่ยม */
+        function initPdfFonts() {
+            pdfMake.fonts = {
+                THSarabunNew: {
+                    normal: 'https://guykorat.github.io/font/THSarabunNew.ttf',
+                    bold: 'https://guykorat.github.io/font/Sarabun-ExtraBold.ttf',
+                    italics: 'https://guykorat.github.io/font/THSarabunNew.ttf',
+                    bolditalics: 'https://guykorat.github.io/font/Sarabun-ExtraBold.ttf'
+                },
+                Charm: {
+                    normal: 'https://guykorat.github.io/font/Charm-Bold.ttf',
+                    bold: 'https://guykorat.github.io/font/Charm-Regular.ttf',
+                },
+                Prompt: {
+                    normal: 'https://guykorat.github.io/font/Prompt-Regular.ttf',
+                    bold: 'https://guykorat.github.io/font/Prompt-Bold.ttf',
+                },
+                Roboto: {
+                    normal: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Regular.ttf',
+                    bold: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Medium.ttf',
+                    italics: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Italic.ttf',
+                    bolditalics: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-MediumItalic.ttf'
+                }
+            };
+        }
+
+        function exportReportToPDF() {
+            const startDateStr = document.getElementById('reportStartDate').value;
+            const endDateStr = document.getElementById('reportEndDate').value;
+
+            if (!startDateStr || !endDateStr) {
+                Swal.fire({ icon: 'warning', title: 'กรุณาเลือกช่วงวันที่', confirmButtonColor: '#16a34a' });
+                return;
+            }
+
+            const startDate = new Date(startDateStr);
+            startDate.setHours(0, 0, 0, 0);
+            const endDate = new Date(endDateStr);
+            endDate.setHours(23, 59, 59, 999);
+
+            const filteredTx = transactions.filter(t => {
+                let tDate = new Date(t.date);
+                return tDate >= startDate && tDate <= endDate;
+            });
+
+            if (filteredTx.length === 0) {
+                Swal.fire({ icon: 'info', title: 'ไม่พบข้อมูล', text: 'ไม่มีรายการรับฝากในช่วงเวลาที่เลือก', confirmButtonColor: '#16a34a' });
+                return;
+            }
+
+            let uniqueDatesSet = new Set();
+            filteredTx.forEach(t => {
+                let d = new Date(t.date);
+                let dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                uniqueDatesSet.add(dateStr);
+            });
+
+            let uniqueDates = Array.from(uniqueDatesSet).sort();
+
+            initPdfFonts();
+
+            let tableBody = [];
+
+            let simpleHeader = [
+                { text: 'ลำดับ', style: 'tableHeader' },
+                { text: 'ชื่อ นามสกุลนักเรียน', style: 'tableHeader' }
+            ];
+            uniqueDates.forEach((dateStr, index) => {
+                let d = new Date(dateStr);
+                let shortDate = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${(d.getFullYear() + 543).toString().substring(2)}`;
+                simpleHeader.push({ text: `ครั้งที่ ${index + 1}\n${shortDate}`, style: 'tableHeader' });
+                simpleHeader.push({ text: `รายได้ที่ ${index + 1}`, style: 'tableHeader' });
+            });
+            simpleHeader.push({ text: 'รวมน้ำหนัก', style: 'tableHeader' });
+            simpleHeader.push({ text: 'รวมเงิน', style: 'tableHeader' });
+            simpleHeader.push({ text: 'ลงชื่อ', style: 'tableHeader' });
+            simpleHeader.push({ text: 'หมายเหตุ', style: 'tableHeader' });
+
+            tableBody.push(simpleHeader);
+
+            let count = 1;
+            let sumTotalWeight = 0;
+            let sumTotalMoney = 0;
+            let dateTotals = {};
+            uniqueDates.forEach(d => {
+                dateTotals[d] = { weight: 0, money: 0 };
+            });
+
+            students.filter(s => !s.isTeacher).forEach(student => {
+                const studentTx = filteredTx.filter(t => t.studentId == student.id);
+
+                let row = [];
+                row.push({ text: String(count++), alignment: 'center', style: 'tableBody' });
+                row.push({ text: `${student.title}${student.name} ${student.surname}`, style: 'tableBody' });
+
+                let studentTotalWeight = 0;
+                let studentTotalMoney = 0;
+
+                uniqueDates.forEach(dateStr => {
+                    let w = 0;
+                    let m = 0;
+                    studentTx.forEach(t => {
+                        if (t.wasteType === "ถอนเงินออก") return;
+
+                        let d = new Date(t.date);
+                        let tStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                        if (tStr === dateStr) {
+                            w += parseFloat(t.weight) || 0;
+                            m += parseFloat(t.price) || 0;
+                        }
+                    });
+
+                    studentTotalWeight += w;
+                    studentTotalMoney += m;
+                    dateTotals[dateStr].weight += w;
+                    dateTotals[dateStr].money += m;
+
+                    row.push({ text: w > 0 ? w.toFixed(2) : '-', alignment: 'right', style: 'tableBody' });
+                    row.push({ text: m > 0 ? m.toFixed(2) : '-', alignment: 'right', style: 'tableBody' });
+                });
+
+                sumTotalWeight += studentTotalWeight;
+                sumTotalMoney += studentTotalMoney;
+
+                row.push({ text: studentTotalWeight > 0 ? studentTotalWeight.toFixed(2) : '-', alignment: 'right', style: 'tableBody' });
+                row.push({ text: studentTotalMoney > 0 ? studentTotalMoney.toFixed(2) : '-', alignment: 'right', style: 'tableBody' });
+                row.push({ text: '', style: 'tableBody' }); // ลงชื่อ
+                row.push({ text: '', style: 'tableBody' }); // หมายเหตุ
+
+                tableBody.push(row);
+            });
+
+            let summaryRow = [];
+            summaryRow.push({ text: 'รวมทั้งสิ้น', colSpan: 2, alignment: 'center', style: 'tableHeader' });
+            summaryRow.push({});
+            uniqueDates.forEach(dateStr => {
+                summaryRow.push({ text: dateTotals[dateStr].weight.toFixed(2), alignment: 'right', style: 'tableHeader' });
+                summaryRow.push({ text: dateTotals[dateStr].money.toFixed(2), alignment: 'right', style: 'tableHeader' });
+            });
+            summaryRow.push({ text: sumTotalWeight.toFixed(2), alignment: 'right', style: 'tableHeader' });
+            summaryRow.push({ text: sumTotalMoney.toFixed(2), alignment: 'right', style: 'tableHeader' });
+            summaryRow.push({ text: '', style: 'tableHeader' });
+            summaryRow.push({ text: '', style: 'tableHeader' });
+
+            tableBody.push(summaryRow);
+
+            let widths = ['auto', '*'];
+            uniqueDates.forEach(() => {
+                widths.push('auto');
+                widths.push('auto');
+            });
+            widths.push('auto');
+            widths.push('auto');
+            widths.push(60); // ลงชื่อ
+            widths.push(60); // หมายเหตุ
+
+            const docDefinition = {
+                pageOrientation: 'landscape',
+                pageSize: 'A4',
+                defaultStyle: {
+                    font: 'THSarabunNew',
+                    fontSize: 12
+                },
+                styles: {
+                    header: {
+                        fontSize: 12,
+                        bold: true,
+                        alignment: 'center',
+                        margin: [0, 0, 0, 10]
+                    },
+                    tableHeader: {
+                        fontSize: 12,
+                        color: 'black',
+                        alignment: 'center'
+                    },
+                    tableBody: {
+                        fontSize: 12,
+                        color: 'black'
+                    }
+                },
+                content: [
+                    { text: 'รายการรับซื้อตามช่วงเวลา', style: 'header' },
+                    { text: `ตั้งแต่วันที่ ${startDateStr} ถึง ${endDateStr}`, alignment: 'center', margin: [0, 0, 0, 10] },
+                    {
+                        table: {
+                            headerRows: 1,
+                            widths: widths,
+                            body: tableBody
+                        }
+                    }
+                ]
+            };
+
+            pdfMake.createPdf(docDefinition).open();
+        }
+
+        // ================= WITHDRAW JS LOGIC =================
+        let withdrawSelectedStudent = null;
+        let withdrawFilteredStudentsCache = [];
+        let withdrawCurrentPage = 1;
+
+        /**
+         * ยอดเงินคงเหลือของคนคนนั้น = ผลรวมยอดเงินทุกรายการ
+         * รายการถอนถูกบันทึกเป็นค่าติดลบไว้แล้ว จึงหักออกให้เองโดยอัตโนมัติ
+         */
+        function getWithdrawBalance(studentId) {
+            let total = 0;
+            transactions.forEach(t => {
+                if (t.studentId == studentId) total += parseFloat(t.price) || 0;
+            });
+            return total;
+        }
+
+        /**
+         * เปิด/ปิดปุ่มถอนเงินตามเกณฑ์ยอดขั้นต่ำ พร้อมบอกว่ายังขาดอีกเท่าไร
+         * ส่ง null มาเมื่อยังไม่ได้เลือกใคร — จะซ่อนคำเตือนและปล่อยปุ่มไว้ตามเดิม
+         */
+        function applyWithdrawMinBalanceRule(balance) {
+            const btn = document.getElementById('submitWithdrawBtn');
+            const note = document.getElementById('withdrawMinBalanceNote');
+            if (!btn || !note) return;
+
+            const blocked = balance !== null && balance < MIN_WITHDRAW_BALANCE;
+
+            btn.disabled = blocked;
+            btn.classList.toggle('opacity-50', blocked);
+            btn.classList.toggle('cursor-not-allowed', blocked);
+
+            note.classList.toggle('hidden', !blocked);
+            if (blocked) {
+                note.querySelector('span').innerText =
+                    `ยอดเงินคงเหลือต้องไม่น้อยกว่า ${MIN_WITHDRAW_BALANCE} บาท จึงจะถอนได้ ` +
+                    `— ขณะนี้มี ฿${balance.toFixed(2)} ยังขาดอีก ฿${(MIN_WITHDRAW_BALANCE - balance).toFixed(2)}`;
+            }
+        }
+
+        function renderWithdrawStudentList(resetPage = true) {
+            if (resetPage) withdrawCurrentPage = 1;
+
+            const container = document.getElementById('withdrawStudentListContainer');
+            const paginationControls = document.getElementById('withdrawPaginationControls');
+            const val = document.getElementById('searchWithdrawStudent') ? document.getElementById('searchWithdrawStudent').value.toLowerCase() : '';
+
+            withdrawFilteredStudentsCache = students.filter(s =>
+                s.id.includes(val) || s.name.includes(val) || s.surname.includes(val)
+            );
+
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (withdrawFilteredStudentsCache.length === 0) {
+                container.innerHTML = '<div class="text-center text-vintage-400 text-sm py-4">ไม่พบรายชื่อ</div>';
+                if(paginationControls) paginationControls.classList.add('hidden');
+                return;
+            }
+
+            const totalPages = Math.ceil(withdrawFilteredStudentsCache.length / itemsPerPage);
+            if (withdrawCurrentPage > totalPages) withdrawCurrentPage = totalPages;
+            if (withdrawCurrentPage < 1) withdrawCurrentPage = 1;
+
+            const startIndex = (withdrawCurrentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const paginatedStudents = withdrawFilteredStudentsCache.slice(startIndex, endIndex);
+
+            paginatedStudents.forEach((s, index) => {
+                const totalM = getWithdrawBalance(s.id);
+                const canWithdraw = totalM >= MIN_WITHDRAW_BALANCE;
+
+                const isSelected = withdrawSelectedStudent && withdrawSelectedStudent.id === s.id;
+                const borderClass = isSelected ? 'border-vintage-500 ring-1 ring-vintage-500' : 'border-vintage-200 hover:border-vintage-400';
+
+                const delay = index * 50;
+
+                const item = document.createElement('div');
+                item.className = `rounded-lg border bg-white overflow-hidden shadow-sm transition-all duration-200 ${borderClass} fade-in`;
+                item.style.animationDelay = `${delay}ms`;
+                item.style.opacity = '0';
+                item.style.animationFillMode = 'forwards';
+
+                item.innerHTML = `
+          <div class="px-4 py-3 bg-white flex justify-between items-center cursor-pointer hover:bg-vintage-50 transition-colors" onclick="selectWithdrawStudentById('${s.id}')">
+              <div class="flex items-center gap-3">
+                 <div class="w-8 h-8 rounded-full ${isSelected ? 'bg-vintage-600 text-white' : 'bg-vintage-100 text-vintage-700'} flex items-center justify-center font-bold text-xs transition-colors border border-vintage-200">${s.name.charAt(0)}</div>
+                 <div>
+                     <div class="text-sm font-semibold ${isSelected ? 'text-vintage-800' : 'text-vintage-700'}">${s.id} - ${s.title}${s.name} ${s.surname.substring(0, 5)}...</div>
+                     <div class="text-xs font-bold mt-0.5 ${canWithdraw ? 'text-green-700' : 'text-amber-600'}">
+                         ยอดสะสม: ฿${totalM.toFixed(2)}${canWithdraw ? '' : ' · ยังถอนไม่ได้'}
+                     </div>
+                 </div>
+              </div>
+          </div>
+        `;
+                container.appendChild(item);
+            });
+
+            if (totalPages > 1 && paginationControls) {
+                paginationControls.classList.remove('hidden');
+                document.getElementById('withdrawPageIndicator').innerText = `หน้า ${withdrawCurrentPage} / ${totalPages}`;
+                document.getElementById('btnWithdrawPrev').disabled = withdrawCurrentPage === 1;
+                document.getElementById('btnWithdrawNext').disabled = withdrawCurrentPage === totalPages;
+            } else if (paginationControls) {
+                paginationControls.classList.add('hidden');
+            }
+        }
+
+        function prevWithdrawPage() {
+            if (withdrawCurrentPage > 1) {
+                withdrawCurrentPage--;
+                renderWithdrawStudentList(false);
+                document.getElementById('withdrawStudentListContainer').scrollTop = 0;
+            }
+        }
+
+        function nextWithdrawPage() {
+            const totalPages = Math.ceil(withdrawFilteredStudentsCache.length / itemsPerPage);
+            if (withdrawCurrentPage < totalPages) {
+                withdrawCurrentPage++;
+                renderWithdrawStudentList(false);
+                document.getElementById('withdrawStudentListContainer').scrollTop = 0;
+            }
+        }
+
+        function selectWithdrawStudentById(id) {
+            const student = students.find(s => s.id == id);
+            if (student) selectWithdrawStudent(student);
+        }
+
+        function selectWithdrawStudent(student) {
+            withdrawSelectedStudent = student;
+            if(document.getElementById('searchWithdrawStudent')) {
+                document.getElementById('searchWithdrawStudent').value = '';
+            }
+
+            document.getElementById('withdrawStudentInitials').innerText = student.name.charAt(0);
+            document.getElementById('withdrawStudentIdDisplay').innerText = 'รหัส: ' + student.id;
+            document.getElementById('withdrawStudentNameDisplay').innerText = `${student.title}${student.name} ${student.surname}`;
+            const roomText = student.isTeacher 
+                ? `<i class="fa-solid fa-chalkboard-user text-gold-500"></i> ตำแหน่ง ${student.room}` 
+                : `<i class="fa-solid fa-school text-gold-500"></i> ห้อง ${student.room}`;
+            document.getElementById('withdrawStudentRoomDisplay').innerHTML = roomText;
+
+            const totalM = getWithdrawBalance(student.id);
+            document.getElementById('currentBalanceDisplay').innerText = totalM.toFixed(2);
+            applyWithdrawMinBalanceRule(totalM);
+
+            document.getElementById('withdrawSelectedStudentCard').classList.remove('hidden');
+            renderWithdrawStudentList();
+            document.getElementById('withdrawStudentListContainer').scrollTop = 0;
+        }
+
+        function resetWithdrawSelectedStudent() {
+            withdrawSelectedStudent = null;
+            if(document.getElementById('withdrawSelectedStudentCard')) {
+                document.getElementById('withdrawSelectedStudentCard').classList.add('hidden');
+            }
+            if(document.getElementById('currentBalanceDisplay')) {
+                document.getElementById('currentBalanceDisplay').innerText = '0.00';
+            }
+            applyWithdrawMinBalanceRule(null);   // ยังไม่ได้เลือกใคร — ซ่อนคำเตือนไว้ก่อน
+            renderWithdrawStudentList();
+        }
+
+        /**
+         * โหลดยอดเงินและรายชื่อใหม่จากชีต โดยไม่ต้องออกแล้วเข้าระบบใหม่
+         * (เปิดหน้าค้างไว้นานๆ ตัวเลขจะเป็นของรอบที่ล็อกอิน ปุ่มนี้ดึงของล่าสุดมาแทน)
+         *
+         * loadTransactions() วาดรายชื่อฝั่งซ้ายให้แล้ว แต่ไม่ได้แตะกล่องยอดเงินฝั่งขวา
+         * ถ้ามีคนถูกเลือกค้างไว้จึงต้องอัปเดตยอดเอง ไม่งั้นตัวเลขจะค้างเป็นของเดิม
+         */
+        function refreshWithdrawData() {
+            return refreshData('btnRefreshWithdraw', () => {
+                if (!withdrawSelectedStudent) return;
+                const balance = getWithdrawBalance(withdrawSelectedStudent.id);
+                document.getElementById('currentBalanceDisplay').innerText = balance.toFixed(2);
+                applyWithdrawMinBalanceRule(balance);
+            });
+        }
+
+        async function submitWithdraw() {
+            if (!withdrawSelectedStudent) return Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'กรุณาค้นหาและเลือกนักเรียนก่อน', confirmButtonColor: '#16a34a' });
+
+            const currentBalance = getWithdrawBalance(withdrawSelectedStudent.id);
+
+            // ยอดคงเหลือต้องถึงเกณฑ์ก่อน จึงจะถอนได้ — ตรวจก่อนดูจำนวนเงินที่ขอถอน
+            if (currentBalance < MIN_WITHDRAW_BALANCE) {
+                applyWithdrawMinBalanceRule(currentBalance);
+                return Swal.fire({
+                    icon: 'error',
+                    title: 'ยังถอนเงินไม่ได้',
+                    html: `ยอดเงินคงเหลือต้องไม่น้อยกว่า <b>${MIN_WITHDRAW_BALANCE}</b> บาท จึงจะถอนได้<br>` +
+                          `ขณะนี้ ${withdrawSelectedStudent.title}${withdrawSelectedStudent.name} ${withdrawSelectedStudent.surname} ` +
+                          `มียอดคงเหลือ <b>฿${currentBalance.toFixed(2)}</b> ยังขาดอีก <b>฿${(MIN_WITHDRAW_BALANCE - currentBalance).toFixed(2)}</b>`,
+                    confirmButtonColor: '#16a34a'
+                });
+            }
+
+            const amount = parseFloat(document.getElementById('withdrawAmountInput').value);
+            if (!amount || amount <= 0) return Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'กรุณาระบุจำนวนเงินถอนให้ถูกต้อง', confirmButtonColor: '#16a34a' });
+
+            if (amount > currentBalance) {
+                document.getElementById('withdrawErrorText').classList.remove('hidden');
+                return Swal.fire({ icon: 'error', title: 'ไม่สามารถถอนเงินได้', text: 'ยอดเงินถอนต้องไม่เกินยอดเงินสะสมที่มี', confirmButtonColor: '#16a34a' });
+            } else {
+                document.getElementById('withdrawErrorText').classList.add('hidden');
+            }
+
+            let withdrawDateVal = document.getElementById('withdrawDate').value;
+            if(!withdrawDateVal) {
+                let d = new Date();
+                withdrawDateVal = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            }
+
+            const payload = {
+                date: withdrawDateVal,
+                studentId: withdrawSelectedStudent.id,
+                studentName: `${withdrawSelectedStudent.title}${withdrawSelectedStudent.name} ${withdrawSelectedStudent.surname}`,
+                room: withdrawSelectedStudent.room,
+                wasteTypeName: "ถอนเงินออก",
+                weight: "", 
+                totalPrice: -amount, 
+                totalPoints: "", 
+                teacherName: currentUser.name
+            };
+
+            Swal.fire({ title: 'กำลังบันทึกรายการถอนเงิน...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            try {
+                let res = await callBackend('saveTransaction', { data: payload });
+                if (res.status === 'success') {
+                    Swal.fire({ icon: 'success', title: 'สำเร็จ', text: 'บันทึกรายการถอนเงินเรียบร้อยแล้ว', confirmButtonColor: '#16a34a' });
+                    document.getElementById('withdrawAmountInput').value = '';
+                    
+                    // Refresh data locally
+                    await loadTransactions();
+                    
+                    // Re-select student to update balance
+                    if(withdrawSelectedStudent) {
+                        selectWithdrawStudent(withdrawSelectedStudent); 
+                    }
+                } else {
+                    Swal.fire({ icon: 'error', title: 'ข้อผิดพลาด', text: res.message, confirmButtonColor: '#16a34a' });
+                }
+            } catch (err) {
+                Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: err.toString(), confirmButtonColor: '#16a34a' });
+            }
+        }
+
+        // ป้องกันไม่ให้การเลื่อนเมาส์ (scroll) เปลี่ยนค่าตัวเลขในช่อง input type="number"
+        document.addEventListener('wheel', function(event) {
+            if (document.activeElement.type === 'number') {
+                document.activeElement.blur();
+            }
+        });
+    </script>
+</body>
+
+</html>

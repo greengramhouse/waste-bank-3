@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>คู่มือใช้งาน EcoPink สำหรับครู</title>
+<!--
+  คู่มือ 1 แผ่น A4 พิมพ์แจกครูตอนเริ่มใช้ระบบใหม่
+  ไฟล์นี้ไม่มีรหัสผ่าน จึงขึ้น repo ได้ — รหัสอยู่ในใบแจ้งรายคนที่สร้างจาก `npm run handout`
+  แก้ที่อยู่เว็บได้ที่ .site-url ทุกจุด (ค้นคำว่า SITE_URL)
+-->
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Sarabun', sans-serif; margin: 0; padding: 10mm;
+    background: #f4f4f5; color: #1f2937; font-size: 12.5px; line-height: 1.65;
+  }
+  .page {
+    max-width: 190mm; margin: 0 auto; background: #fff;
+    padding: 10mm 11mm; border-radius: 4px; box-shadow: 0 1px 6px rgba(0,0,0,.08);
+  }
+  header { border-bottom: 2px solid #ec4899; padding-bottom: 4mm; margin-bottom: 5mm; }
+  .title { display: flex; align-items: center; gap: 8px; }
+  .logo {
+    width: 30px; height: 30px; border-radius: 50%; background: #ec4899; color: #fff;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 15px; flex: none;
+  }
+  h1 { font-size: 19px; margin: 0; color: #be185d; }
+  .sub { font-size: 11.5px; color: #6b7280; margin-top: 1mm; }
+  h2 {
+    font-size: 14px; margin: 6mm 0 2.5mm; color: #9d174d;
+    display: flex; align-items: center; gap: 6px;
+  }
+  h2 .n {
+    width: 19px; height: 19px; border-radius: 50%; background: #fce7f3; color: #be185d;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; flex: none;
+  }
+  ol, ul { margin: 0 0 0 5mm; padding: 0; }
+  li { margin-bottom: 1.2mm; }
+  .mono { font-family: 'Roboto Mono', monospace; background: #fdf2f8; padding: 0 3px; border-radius: 3px; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm 7mm; }
+  .box { border: 1px solid #e5e7eb; border-radius: 5px; padding: 3mm 4mm; background: #fafafa; }
+  .box h3 { font-size: 12.5px; margin: 0 0 1.5mm; color: #374151; }
+  .warn { border-color: #fdba74; background: #fff7ed; }
+  .warn h3 { color: #9a3412; }
+  table { width: 100%; border-collapse: collapse; margin-top: 1mm; }
+  th, td { text-align: left; padding: 1.4mm 2mm; border-bottom: 1px solid #f3f4f6; vertical-align: top; }
+  th { color: #6b7280; font-weight: 600; width: 34%; white-space: nowrap; }
+  .menu-row { display: flex; gap: 5px; align-items: baseline; }
+  .menu-row i { color: #ec4899; width: 14px; text-align: center; flex: none; }
+  footer {
+    margin-top: 6mm; padding-top: 3mm; border-top: 1px solid #e5e7eb;
+    font-size: 11px; color: #6b7280; display: flex; justify-content: space-between; gap: 4mm;
+  }
+  @page { size: A4; margin: 10mm; }
+  /* บีบให้พอดี A4 หนึ่งแผ่น — ครูจะได้ไม่ได้กระดาษใบที่สองที่มีแค่สองบรรทัด */
+  @media print {
+    body { background: #fff; padding: 0; font-size: 11px; line-height: 1.5; }
+    .page { box-shadow: none; padding: 0; max-width: none; border-radius: 0; }
+    header { padding-bottom: 3mm; margin-bottom: 3.5mm; }
+    h1 { font-size: 17px; }
+    h2 { font-size: 13px; margin: 4mm 0 1.5mm; }
+    .box { padding: 2.5mm 3mm; }
+    li { margin-bottom: 0.6mm; }
+    th, td { padding: 1mm 2mm; }
+    footer { margin-top: 4mm; padding-top: 2mm; }
+  }
+  @media (max-width: 640px) { .cols { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="title">
+      <span class="logo"><i class="fa-solid fa-recycle"></i></span>
+      <div>
+        <h1>EcoPink ธนาคารขยะรักษ์โลก — คู่มือครู</h1>
+        <div class="sub">โรงเรียนชุมชนวัดไทยงาม · ระบบใหม่ ปีการศึกษา 2569</div>
+      </div>
+    </div>
+  </header>
+
+  <h2><span class="n">1</span> เข้าใช้งาน</h2>
+  <div class="cols">
+    <div>
+      <table>
+        <tr><th>เปิดเว็บที่</th><td class="mono site-url">https://ecopink.github.io/waste-bank/</td></tr>
+        <tr><th>ชื่อผู้ใช้ / รหัสผ่าน</th><td>ดูในใบแจ้งที่แจกให้รายคน</td></tr>
+      </table>
+      <ul style="margin-top:2mm">
+        <li>พิมพ์ <b>ตัวเล็กทั้งหมด</b> รหัสมีขีดกลาง</li>
+        <li>ใช้ได้ทั้งมือถือและคอมพิวเตอร์ ไม่ต้องติดตั้งอะไร</li>
+        <li>เข้าครั้งแรกแล้วกด "เพิ่มลงหน้าจอโฮม" จะเปิดง่ายเหมือนแอป</li>
+      </ul>
+    </div>
+    <div class="box warn">
+      <h3><i class="fa-solid fa-triangle-exclamation"></i> รหัสใหม่ไม่ใช่ 1234 แล้ว</h3>
+      ระบบใหม่บังคับรหัสอย่างน้อย 6 ตัวอักษร และ<b>ครูห้องเดียวกันแยกเป็นคนละบัญชี</b>
+      เพื่อให้รู้ว่าใครเป็นคนบันทึกรายการไหน · เก็บใบแจ้งรหัสไว้ อย่าให้นักเรียนเห็น
+    </div>
+  </div>
+
+  <h2><span class="n">2</span> เมนูมีอะไรบ้าง</h2>
+  <div class="cols">
+    <div class="box">
+      <h3>งานประจำวัน</h3>
+      <div class="menu-row"><i class="fa-solid fa-balance-scale"></i><div><b>รับฝากขยะ</b> — บันทึกทีละคน เลือกชื่อ ประเภทขยะ ใส่น้ำหนัก ระบบคิดเงินและแต้มให้</div></div>
+      <div class="menu-row"><i class="fa-solid fa-bolt"></i><div><b>รับฝากด่วน</b> — กรอกทั้งห้องรวดเดียว สูงสุด 30 คนต่อครั้ง แถบล่างบอกว่ากรอกไปกี่คน รวมกี่บาท</div></div>
+      <div class="menu-row"><i class="fa-solid fa-book-journal-whills"></i><div><b>ประวัติรับซื้อ</b> — ดูรายการย้อนหลังและ<b>ลบรายการที่บันทึกผิด</b></div></div>
+    </div>
+    <div class="box">
+      <h3>ดูยอดและรายงาน</h3>
+      <div class="menu-row"><i class="fa-solid fa-magnifying-glass-dollar"></i><div><b>ค้นหายอดรายคน</b> — เงินคงเหลือและแต้มของนักเรียนแต่ละคน</div></div>
+      <div class="menu-row"><i class="fa-solid fa-chart-pie"></i><div><b>สรุป</b> — รายคน / รายห้อง / ยอดครู</div></div>
+      <div class="menu-row"><i class="fa-solid fa-file-invoice"></i><div><b>รายงานประจำเดือน</b> — เลือกช่วงวันที่แล้วบันทึกเป็น PDF ได้</div></div>
+    </div>
+  </div>
+
+  <h2><span class="n">3</span> กติกาที่ต้องรู้</h2>
+  <div class="cols">
+    <div>
+      <ul>
+        <li><b>ครูบันทึกได้เฉพาะห้องตัวเอง</b> — จะเห็นเฉพาะรายชื่อและรายการของห้องที่รับผิดชอบ</li>
+        <li><b>ครูก็ฝากขยะในชื่อตัวเองได้</b> ชื่อครูอยู่ในรายชื่อห้องเดียวกับนักเรียน</li>
+        <li><b>ถอนเงินเป็นหน้าที่ของผู้ดูแลระบบ</b> ครูประจำชั้นไม่เห็นเมนูนี้</li>
+      </ul>
+    </div>
+    <div>
+      <ul>
+        <li>ถอนเงินได้เมื่อ<b>ยอดคงเหลือตั้งแต่ 50 บาทขึ้นไป</b> และถอนเกินยอดที่มีไม่ได้</li>
+        <li>แต้มปัดลงเป็นจำนวนเต็มเสมอ</li>
+        <li><b>แก้รายการที่บันทึกแล้วไม่ได้</b> ถ้าผิดให้ลบทิ้งแล้วบันทึกใหม่ ระบบเก็บประวัติการลบไว้ตรวจย้อนหลัง</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2><span class="n">4</span> เรื่องวันที่</h2>
+  <ul>
+    <li>ทุกช่องวันที่ตั้งค่าเริ่มต้นเป็น<b>วันนี้</b>ให้อยู่แล้ว ถ้าบันทึกย้อนหลังให้เปลี่ยนวันก่อนกดบันทึก</li>
+    <li>ช่องเลือกวันของเครื่องแสดงเป็น <b>ค.ศ.</b> เปลี่ยนไม่ได้ ระบบจึงเขียน <b>พ.ศ.</b> กำกับไว้ใต้ช่องให้ตรวจอีกที</li>
+    <li>ตารางประวัติแสดง<b>เวลาที่กดบันทึก</b> ส่วนการค้นหาใช้<b>วันที่รับฝาก</b> — ถ้าย้อนบันทึกของเมื่อวาน สองค่านี้จะไม่ตรงกัน ถือว่าถูกต้อง</li>
+  </ul>
+
+  <h2><span class="n">5</span> ติดปัญหา</h2>
+  <div class="cols">
+    <div>
+      <table>
+        <tr><th>เข้าระบบไม่ได้</th><td>ตรวจว่าพิมพ์ตัวเล็กทั้งหมดและมีขีดกลางในรหัส แล้วลองใหม่</td></tr>
+        <tr><th>ไม่เห็นรายชื่อนักเรียน</th><td>ตรวจว่าเข้าด้วยบัญชีของตัวเอง ไม่ใช่ของครูคู่ห้อง</td></tr>
+      </table>
+    </div>
+    <div>
+      <table>
+        <tr><th>บันทึกผิดคน / ผิดน้ำหนัก</th><td>ไปเมนู "ประวัติรับซื้อ" ลบรายการนั้น แล้วบันทึกใหม่</td></tr>
+        <tr><th>บันทึกแล้วไม่ขึ้น</th><td>ตรวจสัญญาณอินเทอร์เน็ต แล้วดึงหน้าจอลงเพื่อโหลดใหม่</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <footer>
+    <div>สอบถามเพิ่มเติมได้ที่ผู้ดูแลระบบของโรงเรียน</div>
+    <div>ปรับปรุง 4 กันยายน 2569</div>
+  </footer>
+
+</div>
+</body>
+</html>

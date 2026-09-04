@@ -1,0 +1,125 @@
+rules_version = '2';
+
+// ============================================================================
+// EcoPink — กฎความปลอดภัย Firestore
+//
+// index.html อยู่บน GitHub Pages แบบสาธารณะ ใครก็อ่านโค้ดและ API key ได้
+// ไฟล์นี้จึงเป็น "กำแพงเดียว" ที่กันข้อมูลจริง — การซ่อนปุ่มใน JS เป็นแค่ UX
+//
+// บทบาทมาจาก custom claims ที่ตั้งโดย tools/seed-firestore.mjs:
+//   role: 'teacher' | 'admin'
+//   rooms: ['ป.5']            ห้องที่ครูรับผิดชอบ
+//   canViewAll: false          เผื่ออนาคต — เปิดให้ครูดูภาพรวมทั้งโรงเรียน (อ่านอย่างเดียว)
+// ============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- ฟังก์ชันช่วยเหลือ ----------
+
+    function signedIn()  { return request.auth != null; }
+    function role()      { return request.auth.token.get('role', ''); }
+    function myRooms()   { return request.auth.token.get('rooms', []); }
+    function viewAll()   { return request.auth.token.get('canViewAll', false); }
+
+    function isAdmin()   { return signedIn() && role() == 'admin'; }
+    function isTeacher() { return signedIn() && role() == 'teacher'; }
+    function isStaff()   { return isAdmin() || isTeacher(); }
+
+    // สิทธิ์ "เขียน" ผูกกับห้องที่รับผิดชอบเสมอ — ไม่มีทางลัด
+    function canWriteRoom(r) {
+      return isAdmin() || (isTeacher() && r in myRooms());
+    }
+
+    // สิทธิ์ "อ่าน" แยกจากสิทธิ์เขียน เพื่อให้เปิดฟีเจอร์ดูภาพรวมทั้งโรงเรียน
+    // ได้ในอนาคตโดยแค่ตั้ง claim canViewAll ไม่ต้องแก้กฎข้อนี้อีก
+    function canViewRoom(r) {
+      return isAdmin() || (isTeacher() && (r in myRooms() || viewAll()));
+    }
+
+    function isValidDateStr(s) {
+      return s is string && s.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+
+    // ---------- members: นักเรียน + บุคลากร ----------
+    // ทุกคนสังกัดห้องเดียวกันหมด ไม่ว่าจะเป็นนักเรียนหรือครู
+    // ครูประจำชั้น ป.5 มี room = 'ป.5' เหมือนนักเรียนในห้อง จึงรับฝากขยะในชื่อตัวเองได้
+    // บุคลากรที่ไม่ได้เป็นครูประจำชั้น (ผอ. ธุรการ ส่วนกลาง) อยู่ห้อง 'ส่วนกลาง' — แอดมินดูแล
+    //
+    // แก้ไขรายชื่อได้เฉพาะแอดมิน — ปกติทำผ่าน tools/seed-firestore.mjs ปีละครั้ง
+    match /members/{memberId} {
+      allow read:  if isStaff() && canViewRoom(resource.data.room);
+      allow write: if isAdmin();
+    }
+
+    // ---------- rooms: ทะเบียนห้อง + ครูประจำชั้น ----------
+    // ครูทุกคนอ่านได้ เพราะหน้าสรุป/รายงานต้องใช้ชื่อและลำดับห้อง
+    match /rooms/{roomId} {
+      allow read:  if isStaff();
+      allow write: if isAdmin();
+    }
+
+    // ---------- wasteTypes: ประเภทขยะและราคา ----------
+    match /wasteTypes/{typeId} {
+      allow read:  if isStaff();
+      allow write: if isAdmin();
+    }
+
+    // ---------- users: บัญชีผู้ใช้ ----------
+    // อ่านได้เฉพาะเอกสารของตัวเอง (หน้าเว็บใช้ตอนล็อกอินเพื่อรู้ชื่อและห้อง)
+    // เขียนไม่ได้เลยจากหน้าเว็บ — แก้ผ่าน Admin SDK เท่านั้น
+    // เพราะ role/rooms ที่นี่ต้องตรงกับ custom claims เสมอ
+    match /users/{uid} {
+      allow read:  if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow write: if false;
+    }
+
+    // ---------- transactions: ธุรกรรมรับฝาก/ถอน ----------
+    match /transactions/{txId} {
+
+      // ครูต้อง query ด้วย where('room','==',myRoom) เสมอ
+      // ไม่งั้นจะมีเอกสารห้องอื่นติดมาแล้วทั้ง query ถูกปฏิเสธ
+      allow read: if isStaff() && canViewRoom(resource.data.room);
+
+      allow create: if canWriteRoom(request.resource.data.room)
+                    && request.resource.data.recordedByUid == request.auth.uid
+                    && request.resource.data.type in ['deposit', 'withdraw']
+                    && isValidDateStr(request.resource.data.date)
+                    && request.resource.data.schoolYear is string
+                    && request.resource.data.memberId is string
+                    && request.resource.data.amount is number
+                    // ถอนเงินเป็นสิทธิ์แอดมินเท่านั้น (ตรงกับแท็บที่ซ่อนไว้ในหน้าเว็บ)
+                    && (request.resource.data.type == 'deposit' || isAdmin());
+
+      // แก้ไขไม่ได้ — ต้องลบแล้วบันทึกใหม่ เพื่อให้ deletedTransactions เก็บร่องรอยครบ
+      allow update: if false;
+
+      allow delete: if canWriteRoom(resource.data.room);
+    }
+
+    // ---------- deletedTransactions: ที่เก็บรายการที่ถูกลบ ----------
+    // ครูสร้างได้ (เกิดขึ้นในแบตช์เดียวกับตอนลบ) แต่อ่านย้อนหลังได้เฉพาะแอดมิน
+    // ลบทิ้งไม่ได้เลย — นี่คือหลักฐานการตรวจสอบ
+    match /deletedTransactions/{txId} {
+      allow read:   if isAdmin();
+      allow create: if isStaff() && request.resource.data.deletedByUid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // ---------- balances: ยอดสรุปรายคน ----------
+    // มีฟิลด์ room ในเอกสารเพื่อให้กฎตรวจสิทธิ์ได้โดยไม่ต้อง get() ข้ามคอลเลกชัน
+    // (get() ในกฎเสียโควต้าอ่านทุกครั้ง — เลี่ยงได้ก็ควรเลี่ยง)
+    // สร้าง/ลบได้เฉพาะแอดมิน ครูทำได้แค่บวกลบยอดผ่าน FieldValue.increment()
+    match /balances/{memberId} {
+      allow read:   if isStaff() && canViewRoom(resource.data.room);
+      allow update: if canWriteRoom(resource.data.room)
+                    && request.resource.data.room == resource.data.room;
+      allow create, delete: if isAdmin();
+    }
+
+    // ---------- ปฏิเสธทุกอย่างที่ไม่ได้ระบุไว้ ----------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

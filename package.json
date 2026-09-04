@@ -1,0 +1,29 @@
+{
+  "name": "ecopink-waste-bank",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "EcoPink ธนาคารขยะรักษ์โลก — สคริปต์ย้ายข้อมูลและกฎความปลอดภัย Firestore",
+  "scripts": {
+    "serve": "npx serve . -p 5000",
+    "emulators": "firebase emulators:start --only firestore,auth",
+    "export": "node tools/export-sheets.mjs",
+    "seed": "node tools/seed-firestore.mjs",
+    "seed:emu": "node tools/seed-firestore.mjs --emulator",
+    "verify": "node tools/verify.mjs",
+    "verify:emu": "node tools/verify.mjs --emulator",
+    "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes",
+    "test:rules": "node tools/test-rules.mjs",
+    "balances": "node tools/recompute-balances.mjs",
+    "set-passwords": "node tools/set-passwords.mjs",
+    "handout": "node tools/make-handout.mjs"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.2"
+  },
+  "devDependencies": {
+    "firebase": "^12.18.0",
+    "firebase-tools": "^13.29.1",
+    "serve": "^14.2.4"
+  }
+}

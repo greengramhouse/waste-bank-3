@@ -1,0 +1,2123 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>EcoPink: Student Portal</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Mali:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Mali', 'cursive'], 
+            heading: ['Fredoka', 'sans-serif'],
+          },
+          colors: {
+            eco: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              300: '#86efac',
+              400: '#4ade80',
+              500: '#22c55e',
+              600: '#16a34a',
+              900: '#14532d',
+            },
+            sky: {
+              100: '#e0f2fe',
+              300: '#7dd3fc',
+              500: '#0ea5e9',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Mali', cursive;
+      background: linear-gradient(180deg, #e0f2fe 0%, #f0fdf4 100%);
+      min-height: 100vh;
+      color: #14532d;
+      overflow-x: hidden;
+    }
+    
+    h1, h2, h3, .heading-font { font-family: 'Fredoka', sans-serif; }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(8px);
+      border: 2px solid rgba(255, 255, 255, 1);
+      box-shadow: 0 8px 32px rgba(22, 163, 74, 0.1);
+      border-radius: 24px;
+    }
+
+    .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Game Canvas Styles */
+    #gameContainer {
+      width: 100%;
+      height: 60vh;
+      position: relative;
+      background: #7dd3fc;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+      border: 4px solid #fff;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: crosshair;
+      touch-action: none; /* ป้องกันการไถหน้าจอตอนลากของ */
+    }
+
+    /* Floating Shop Menu */
+    .shop-item {
+      transition: all 0.2s;
+    }
+    .shop-item:hover, .shop-item.selected {
+      transform: scale(1.1);
+      border-color: #22c55e;
+      background: #f0fdf4;
+    }
+    .shop-item.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      filter: grayscale(100%);
+    }
+
+    /* Bottom Nav */
+    .nav-btn {
+      transition: all 0.3s;
+      color: #9ca3af;
+    }
+    .nav-btn.active {
+      color: #16a34a;
+      transform: translateY(-5px);
+    }
+    .nav-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 6px;
+      height: 6px;
+      background-color: #16a34a;
+      border-radius: 50%;
+    }
+    /* ===== RECYCLE HERO GAME STYLES ===== */
+    #recycle-game-wrapper {
+      font-family: 'Press Start 2P', cursive;
+    }
+    #rg-outer {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 9/16;
+      max-height: 70vh;
+      background: #0a0a0f;
+      overflow: hidden;
+      border-radius: 16px;
+      border: 3px solid #333;
+      margin: 0 auto;
+    }
+    #rg-outer .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+    #rg-outer .screen.hidden { display: none !important; }
+    #rg-outer .overlay-screen { background: rgba(0,0,0,0.9); }
+    #rg-outer .overlay-title { font-size: clamp(0.8rem,3vw,1.4rem); margin-bottom:16px; text-align:center; line-height:2; }
+    #rg-outer .overlay-info { font-size: clamp(0.5rem,1.5vw,0.75rem); color:#ccc; text-align:center; line-height:2.6; margin-bottom:20px; }
+    #rg-outer .overlay-btn { font-family:'Press Start 2P',cursive; font-size:clamp(0.5rem,1.5vw,0.75rem); padding:12px 24px; cursor:pointer; border:none; letter-spacing:1px; margin:6px; }
+    .btn-green  { background:#7fff00; color:#000; border-bottom:4px solid #3a8a00; }
+    .btn-red    { background:#ff4444; color:#fff; border-bottom:4px solid #880000; }
+    .btn-yellow { background:#ffe600; color:#000; border-bottom:4px solid #b8860b; }
+    #rg-outer .overlay-btn:hover { opacity:0.85; transform:translateY(2px); }
+    #rg-hud { position:absolute; top:0; left:0; right:0; display:flex; justify-content:space-between; align-items:flex-start; padding:8px 12px; z-index:5; pointer-events:none; }
+    #rg-hud .hud-box { background:rgba(0,0,0,0.75); border:2px solid #333; padding:6px 10px; min-width:70px; }
+    #rg-hud .hud-label { font-size:clamp(0.4rem,1vw,0.55rem); color:#aaa; margin-bottom:3px; letter-spacing:2px; }
+    #rg-hud .hud-value { font-size:clamp(0.55rem,1.5vw,0.8rem); }
+    #rg-hud .hud-score { color:#ffe600; }
+    #rg-hud .hud-stage { color:#7fff00; }
+    #rg-hud .hud-timer { color:#ff7f00; }
+    #rg-hud .hud-timer.urgent { color:#ff2222; animation:timerFlash2 0.4s infinite; }
+    @keyframes timerFlash2 { 50% { opacity:0.3; } }
+    #rg-stage-goal { position:absolute; bottom:80px; left:50%; transform:translateX(-50%); font-size:clamp(0.45rem,1.5vw,0.7rem); color:#ccc; background:rgba(0,0,0,0.85); border:2px solid #555; padding:8px 16px; z-index:5; white-space:nowrap; }
+    #rg-stage-goal span { color:#ffe600; }
+    #rg-stage-goal .current-label { color:#7fff00; }
+    #rg-stage-banner { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:clamp(0.8rem,3vw,1.6rem); text-align:center; color:#ffe600; text-shadow:3px 3px 0 #b8860b; z-index:30; pointer-events:none; display:none; }
+    #rg-stage-banner.show { display:block; animation:bannerAnim2 2s ease-out forwards; }
+    @keyframes bannerAnim2 { 0%{opacity:0;transform:translate(-50%,-50%) scale(0.5)} 30%{opacity:1;transform:translate(-50%,-50%) scale(1.1)} 70%{opacity:1;transform:translate(-50%,-50%) scale(1)} 100%{opacity:0;transform:translate(-50%,-50%) scale(0.9)} }
+    #rg-canvas { position:relative; z-index:1; image-rendering:pixelated; }
+    #rg-mobile-dpad { position:absolute; bottom:12px; left:50%; transform:translateX(-50%); display:none; gap:10px; z-index:15; align-items:center; }
+    .rg-dpad-btn { font-family:'Press Start 2P',cursive; font-size:clamp(1rem,4vw,1.4rem); width:clamp(56px,14vw,72px); height:clamp(56px,14vw,72px); background:rgba(0,0,0,0.75); border:3px solid #555; color:#ffe600; cursor:pointer; user-select:none; display:flex; align-items:center; justify-content:center; border-bottom:5px solid #333; transition:transform 0.08s; }
+    .rg-dpad-btn:active { transform:translateY(3px); border-bottom-width:2px; background:rgba(255,230,0,0.15); }
+    /* Character shop */
+    .rg-char-shop { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:16px; }
+    .rg-char-item { background:#1a1a2e; border:2px solid #333; padding:12px; text-align:center; cursor:pointer; transition:all 0.1s; }
+    .rg-char-item.selected { border-color:#ffe600; background:#2a2a1e; }
+    .rg-char-item.locked { opacity:0.6; cursor:default; }
+  </style>
+</head>
+<body class="antialiased selection:bg-eco-300 selection:text-eco-900 pb-24">
+
+  <!-- ================= L O G I N ================= -->
+  <div id="loginView" class="min-h-screen flex items-center justify-center p-4 fade-in">
+    <div class="glass-card w-full max-w-sm p-8 text-center relative overflow-hidden">
+      <div class="absolute top-4 left-4 text-white opacity-60 text-4xl"><i class="fa-solid fa-cloud"></i></div>
+      <div class="absolute top-10 right-4 text-white opacity-60 text-3xl"><i class="fa-solid fa-cloud"></i></div>
+
+      <div class="w-24 h-24 bg-gradient-to-br from-eco-300 to-eco-500 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white shadow-lg z-10 relative">
+        <i class="fa-solid fa-seedling text-5xl text-white"></i>
+      </div>
+      <h1 class="heading-font text-3xl font-bold text-eco-600 mb-1">Eco Valley</h1>
+      <p class="text-sm text-eco-900/60 mb-6 font-medium">เข้าสู่ระบบด้วยรหัสนักเรียน</p>
+
+      <form id="loginForm" class="space-y-4" onsubmit="event.preventDefault(); doStudentLogin();">
+        <input type="text" id="studentId" required class="w-full px-4 py-3 rounded-xl border-2 border-eco-100 focus:border-eco-400 outline-none text-center font-bold text-lg text-eco-900 bg-white/80" placeholder="รหัสนักเรียน">
+        <input type="password" id="studentPass" required class="w-full px-4 py-3 rounded-xl border-2 border-eco-100 focus:border-eco-400 outline-none text-center font-bold text-lg text-eco-900 bg-white/80" placeholder="รหัสผ่าน (รหัสนักเรียน)">
+        <button type="submit" id="loginBtn" class="w-full py-3 bg-eco-500 text-white heading-font font-bold text-xl rounded-xl hover:bg-eco-600 transition shadow-md mt-2">
+          เข้าสู่โลกสีเขียว <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= M A I N   A P P ================= -->
+  <div id="mainAppView" class="hidden min-h-screen flex flex-col max-w-md mx-auto relative shadow-2xl bg-white/40">
+    
+    <!-- Top Header -->
+    <header class="bg-white/80 backdrop-blur-md p-4 sticky top-0 z-40 rounded-b-3xl shadow-sm flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-full bg-eco-100 text-eco-500 flex items-center justify-center text-xl border-2 border-eco-200">
+          <i class="fa-solid fa-child-reaching"></i>
+        </div>
+        <div>
+          <div class="text-xs text-eco-600 font-semibold" id="displayRoom">ห้องเรียน</div>
+          <div class="heading-font font-bold text-gray-800 leading-tight" id="displayName">ชื่อนักเรียน</div>
+        </div>
+      </div>
+      <button onclick="logout()" class="w-10 h-10 rounded-full bg-red-50 text-red-400 hover:bg-red-100 flex items-center justify-center transition">
+        <i class="fa-solid fa-power-off"></i>
+      </button>
+    </header>
+
+    <!-- Content Area -->
+    <main class="flex-grow p-4 space-y-6">
+      
+      <!-- ===== TAB: DASHBOARD ===== -->
+      <div id="view-dashboard" class="content-view fade-in">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="heading-font text-xl text-eco-900">สรุปความสำเร็จของฉัน <i class="fa-solid fa-medal text-yellow-400"></i></h2>
+          <button onclick="refreshData()" class="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-eco-500 hover:bg-eco-100 transition" title="ดึงข้อมูลล่าสุด">
+            <i class="fa-solid fa-rotate-right" id="refreshIconDash"></i>
+          </button>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-4 mb-6">
+          <div class="glass-card p-4 text-center">
+            <div class="w-10 h-10 mx-auto bg-green-100 text-green-500 rounded-full flex items-center justify-center text-lg mb-2"><i class="fa-solid fa-weight-hanging"></i></div>
+            <div class="text-xs text-gray-500 font-bold">ช่วยโลกลดขยะ</div>
+            <div class="heading-font text-2xl text-green-600 font-bold"><span id="stat-weight">0</span><span class="text-sm">กก.</span></div>
+          </div>
+          <div class="glass-card p-4 text-center">
+            <div class="w-10 h-10 mx-auto bg-blue-100 text-blue-500 rounded-full flex items-center justify-center text-lg mb-2"><i class="fa-solid fa-piggy-bank"></i></div>
+            <div class="text-xs text-gray-500 font-bold">เงินออมสะสม</div>
+            <div class="heading-font text-2xl text-blue-600 font-bold"><span id="stat-money">0</span><span class="text-sm">฿</span></div>
+          </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-amber-400 to-orange-400 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden border-4 border-white">
+          <div class="absolute -right-4 -bottom-4 text-white opacity-20 text-7xl"><i class="fa-solid fa-star"></i></div>
+          <div class="relative z-10">
+            <div class="text-amber-100 font-bold mb-1">แต้มสะสมทั้งหมด (Points)</div>
+            <div class="heading-font text-5xl font-bold" id="stat-points">0</div>
+            <div class="text-sm mt-2 font-medium bg-black/10 inline-block px-3 py-1 rounded-full">
+              แลกแต้มไปแล้ว : <span id="stat-spent">0</span> แต้ม
+            </div>
+          </div>
+        </div>
+
+        <button onclick="switchTab('game')" class="w-full mt-6 bg-eco-500 text-white heading-font text-xl py-4 rounded-2xl shadow-lg border-b-4 border-eco-600 active:border-b-0 active:translate-y-1 transition flex items-center justify-center gap-2 animate-bounce">
+          <i class="fa-solid fa-gamepad"></i> เข้าเล่นเกม Eco Valley
+        </button>
+      </div>
+
+      <!-- ===== TAB: HISTORY ===== -->
+      <div id="view-history" class="content-view hidden fade-in">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="heading-font text-xl text-eco-900">ประวัติการฝากขยะ <i class="fa-solid fa-clock-rotate-left text-eco-400"></i></h2>
+          <button onclick="refreshData()" class="text-sm bg-white px-3 py-1 rounded-full shadow-sm text-eco-500 hover:bg-eco-100 transition flex items-center gap-2 font-bold">
+            <i class="fa-solid fa-rotate-right" id="refreshIconHist"></i> ซิงค์ข้อมูล
+          </button>
+        </div>
+        <div class="space-y-3" id="historyList">
+          <div class="text-center text-gray-400 py-8">กำลังโหลดข้อมูล...</div>
+        </div>
+      </div>
+
+      <!-- ===== TAB: COMMUNITY (เพื่อน) ===== -->
+      <div id="view-community" class="content-view hidden fade-in">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="heading-font text-xl text-eco-900"><i class="fa-solid fa-user-group text-sky-500"></i> สังคมรักษ์โลก</h2>
+          <button onclick="loadClassmates()" class="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-sky-500 hover:bg-sky-100 transition" title="โหลดรายชื่อใหม่">
+            <i class="fa-solid fa-rotate-right" id="refreshIconCommunity"></i>
+          </button>
+        </div>
+        <div class="glass-card p-4 mb-4 text-sm text-eco-900 font-bold bg-sky-50/50">
+          เยี่ยมชมเกาะของเพื่อนๆ และแบ่งปันแต้มให้กันได้ที่นี่!
+        </div>
+        <div class="space-y-3" id="classmateList">
+          <div class="text-center text-gray-400 py-8">กำลังโหลดรายชื่อเพื่อน...</div>
+        </div>
+      </div>
+
+      <!-- ===== TAB: GAME (ECO VALLEY) ===== -->
+      <div id="view-game" class="content-view hidden fade-in h-full flex flex-col">
+        <div class="flex justify-between items-center mb-2">
+          <h2 class="heading-font text-xl text-eco-900"><i class="fa-solid fa-earth-asia text-eco-500"></i> เกาะของฉัน</h2>
+          <div class="bg-amber-100 text-amber-600 px-3 py-1 rounded-full font-bold text-sm border-2 border-amber-200 shadow-sm flex items-center gap-1">
+            <i class="fa-solid fa-star text-amber-400"></i> <span id="game-current-points">0</span>
+          </div>
+        </div>
+
+        <!-- Game Canvas Area -->
+        <div id="gameContainer">
+          
+          <!-- Camera Button -->
+          <div class="absolute top-3 right-3 z-20">
+             <button onclick="takeSnapshot()" class="bg-white/90 text-sky-500 w-11 h-11 rounded-full shadow-lg hover:bg-white flex items-center justify-center transition border-2 border-sky-200 hover:scale-110" title="แชร์ภาพเกาะ">
+                 <i class="fa-solid fa-camera text-xl"></i>
+             </button>
+          </div>
+
+          <!-- Back Home Button (Visit Mode) -->
+          <div id="visitModeHeader" class="absolute top-3 left-3 z-20 hidden">
+             <button onclick="returnHome()" class="bg-rose-500 text-white px-3 py-2 rounded-xl shadow-lg hover:bg-rose-600 flex items-center gap-2 font-bold heading-font transition hover:scale-105 border-2 border-white">
+                 <i class="fa-solid fa-house-user"></i> กลับเกาะตัวเอง
+             </button>
+          </div>
+
+          <canvas id="gameCanvas"></canvas>
+          
+          <!-- Loading Overlay -->
+          <div id="gameLoading" class="absolute inset-0 bg-sky-200/80 backdrop-blur-sm flex flex-col items-center justify-center z-10 transition-opacity">
+            <i class="fa-solid fa-seedling text-4xl text-eco-500 animate-bounce mb-2"></i>
+            <span class="heading-font text-eco-700 font-bold">กำลังสร้างเกาะ...</span>
+          </div>
+        </div>
+
+        <!-- Shop Area -->
+        <div id="shopArea" class="mt-4 bg-white p-4 rounded-3xl shadow-sm border-2 border-eco-100">
+          <div class="text-sm font-bold text-gray-500 mb-3 heading-font">เมนูไอเทม (เลือกแล้วกดที่เกาะ)</div>
+          <div class="flex gap-3 overflow-x-auto hide-scrollbar pb-2 px-1">
+            
+            <div class="shop-item bg-white border-2 border-gray-200 rounded-2xl p-2 min-w-[70px] text-center cursor-pointer flex flex-col items-center" onclick="selectShopItem('move', 0)" id="shop-move">
+              <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-xl text-gray-600 mb-1"><i class="fa-solid fa-arrows-up-down-left-right"></i></div>
+              <div class="text-[10px] font-bold text-gray-600">ย้ายที่ (ลาก)</div>
+              <div class="text-[10px] font-bold text-gray-400 mt-0.5">ฟรี</div>
+            </div>
+
+            <div class="shop-item bg-white border-2 border-gray-200 rounded-2xl p-2 min-w-[70px] text-center cursor-pointer flex flex-col items-center" onclick="selectShopItem('flower', 10)" id="shop-flower">
+              <div class="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center text-xl text-pink-500 mb-1"><i class="fa-solid fa-fan text-[18px]"></i></div>
+              <div class="text-[10px] font-bold text-gray-600">ดอกไม้</div>
+              <div class="text-xs font-bold text-amber-500"><i class="fa-solid fa-star"></i> 10</div>
+            </div>
+
+            <div class="shop-item bg-white border-2 border-gray-200 rounded-2xl p-2 min-w-[70px] text-center cursor-pointer flex flex-col items-center" onclick="selectShopItem('tree', 30)" id="shop-tree">
+              <div class="w-10 h-10 bg-eco-100 rounded-full flex items-center justify-center text-xl text-eco-500 mb-1"><i class="fa-solid fa-tree"></i></div>
+              <div class="text-[10px] font-bold text-gray-600">ต้นไม้</div>
+              <div class="text-xs font-bold text-amber-500"><i class="fa-solid fa-star"></i> 30</div>
+            </div>
+
+            <div class="shop-item bg-white border-2 border-gray-200 rounded-2xl p-2 min-w-[70px] text-center cursor-pointer flex flex-col items-center" onclick="selectShopItem('bush', 15)" id="shop-bush">
+              <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-xl text-green-600 mb-1"><i class="fa-solid fa-leaf"></i></div>
+              <div class="text-[10px] font-bold text-gray-600">พุ่มไม้</div>
+              <div class="text-xs font-bold text-amber-500"><i class="fa-solid fa-star"></i> 15</div>
+            </div>
+
+            <div class="shop-item bg-white border-2 border-gray-200 rounded-2xl p-2 min-w-[70px] text-center cursor-pointer flex flex-col items-center" onclick="selectShopItem('birdhouse', 40)" id="shop-birdhouse">
+              <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-xl text-orange-500 mb-1"><i class="fa-solid fa-crow"></i></div>
+              <div class="text-[10px] font-bold text-gray-600">บ้านนก</div>
+              <div class="text-xs font-bold text-amber-500"><i class="fa-solid fa-star"></i> 40</div>
+            </div>
+
+            <div class="shop-item bg-white border-2 border-gray-200 rounded-2xl p-2 min-w-[70px] text-center cursor-pointer flex flex-col items-center" onclick="selectShopItem('solar', 80)" id="shop-solar">
+              <div class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-xl text-slate-500 mb-1"><i class="fa-solid fa-solar-panel"></i></div>
+              <div class="text-[10px] font-bold text-gray-600">โซลาร์เซลล์</div>
+              <div class="text-xs font-bold text-amber-500"><i class="fa-solid fa-star"></i> 80</div>
+            </div>
+
+            <div class="shop-item bg-white border-2 border-gray-200 rounded-2xl p-2 min-w-[70px] text-center cursor-pointer flex flex-col items-center" onclick="selectShopItem('windmill', 100)" id="shop-windmill">
+              <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-xl text-blue-500 mb-1"><i class="fa-solid fa-fan"></i></div>
+              <div class="text-[10px] font-bold text-gray-600">กังหันลม</div>
+              <div class="text-xs font-bold text-amber-500"><i class="fa-solid fa-star"></i> 100</div>
+            </div>
+
+            <div class="shop-item bg-white border-2 border-gray-200 rounded-2xl p-2 min-w-[70px] text-center cursor-pointer flex flex-col items-center" onclick="selectShopItem('fountain', 150)" id="shop-fountain">
+              <div class="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center text-xl text-cyan-500 mb-1"><i class="fa-solid fa-water"></i></div>
+              <div class="text-[10px] font-bold text-gray-600">น้ำพุ</div>
+              <div class="text-xs font-bold text-amber-500"><i class="fa-solid fa-star"></i> 150</div>
+            </div>
+
+            <div class="shop-item bg-white border-2 border-gray-200 rounded-2xl p-2 min-w-[70px] text-center cursor-pointer flex flex-col items-center" onclick="selectShopItem('mysterybox', 50)" id="shop-mysterybox">
+              <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-xl text-purple-500 mb-1"><i class="fa-solid fa-gift text-[18px]"></i></div>
+              <div class="text-[10px] font-bold text-gray-600">กล่องสุ่มแรร์</div>
+              <div class="text-xs font-bold text-amber-500"><i class="fa-solid fa-star"></i> 50</div>
+            </div>
+
+            <div class="shop-item bg-white border-2 border-gray-200 rounded-2xl p-2 min-w-[70px] text-center cursor-pointer flex flex-col items-center" onclick="buyExpansion()" id="shop-expand">
+              <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center text-xl text-amber-500 mb-1"><i class="fa-solid fa-map-location-dot"></i></div>
+              <div class="text-[10px] font-bold text-gray-600">ขยาย (+5)</div>
+              <div class="text-xs font-bold text-amber-500"><i class="fa-solid fa-star"></i> 150</div>
+            </div>
+
+            <div class="shop-item bg-white border-2 border-gray-200 rounded-2xl p-2 min-w-[70px] text-center cursor-pointer flex flex-col items-center" onclick="selectShopItem('delete', 0)" id="shop-delete">
+              <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-xl text-red-500 mb-1"><i class="fa-solid fa-shovel"></i></div>
+              <div class="text-[10px] font-bold text-gray-600">ถอนทิ้ง</div>
+              <div class="text-[10px] font-bold text-gray-400 mt-0.5">ฟรี</div>
+            </div>
+
+          </div>
+          <button onclick="saveGameToCloud()" class="w-full mt-3 py-2 bg-sky-500 text-white rounded-xl heading-font font-bold shadow hover:bg-sky-600 transition flex justify-center items-center gap-2">
+            <i class="fa-solid fa-cloud-arrow-up"></i> บันทึกความคืบหน้า
+          </button>
+        </div>
+      </div>
+
+        <!-- ===== TAB: RECYCLE HERO GAME ===== -->
+        <div id="view-recycle" class="content-view hidden fade-in">
+          <div id="recycle-game-wrapper">
+
+            <!-- Character Shop (shown before game start) -->
+            <div id="rg-char-shop-panel" class="bg-gray-900 rounded-2xl p-4 mb-4">
+              <div class="flex justify-between items-center mb-3">
+                <h2 class="text-white heading-font text-base" style="font-family:'Press Start 2P',cursive;font-size:0.7rem">🗑️ RECYCLE HERO</h2>
+                <div class="bg-amber-400 text-black px-2 py-1 rounded text-xs font-bold" style="font-family:'Press Start 2P',cursive;font-size:0.5rem">
+                  ⭐ <span id="rg-avail-pts">0</span>
+                </div>
+              </div>
+              <p class="text-gray-400 text-xs mb-3" style="font-family:'Press Start 2P',cursive;font-size:0.45rem">เลือกตัวละคร (ใช้แต้มธนาคารซื้อ)</p>
+              <div class="rg-char-shop" id="rg-char-shop-grid"><!-- filled by JS --></div>
+              <button onclick="rg_startGame()" class="w-full py-3 text-black font-bold rounded-xl text-sm" style="background:#ffe600;font-family:'Press Start 2P',cursive;font-size:0.6rem">▶ เริ่มเกม</button>
+            </div>
+
+            <!-- Actual game canvas container -->
+            <div id="rg-outer" class="hidden">
+
+              <!-- HUD -->
+              <div id="rg-hud" class="hidden">
+                <div class="hud-box"><div class="hud-label">SCORE</div><div class="hud-value hud-score" id="rg-hudScore">0</div></div>
+                <div class="hud-box" style="text-align:center"><div class="hud-label">STAGE</div><div class="hud-value hud-stage" id="rg-hudStage">1/10</div></div>
+                <div class="hud-box" style="text-align:right"><div class="hud-label">TIME</div><div class="hud-value hud-timer" id="rg-hudTimer">1:00</div></div>
+              </div>
+
+              <!-- Stage Goal Bar -->
+              <div id="rg-stage-goal" class="hidden">
+                <span class="goal-label">เป้าหมาย:</span> <span id="rg-goalScore">0</span> คะแนน &nbsp;|&nbsp;
+                <span class="current-label">คะแนนปัจจุบัน:</span> <span id="rg-currentScore" style="color:#7fff00">0</span>
+              </div>
+
+              <!-- Stage Banner -->
+              <div id="rg-stage-banner"></div>
+
+              <!-- Stage Intro Screen -->
+              <div id="rg-stage-intro-screen" class="screen hidden">
+                <div class="overlay-title" id="rg-stageIntroTitle" style="color:#ffe600"></div>
+                <div class="overlay-info" id="rg-stageIntroInfo"></div>
+                <button class="overlay-btn btn-green" onclick="rg_beginStage()">▶ เริ่มด่านนี้!</button>
+                <button class="overlay-btn btn-yellow" onclick="rg_backToShop()" style="font-size:0.5rem;padding:8px 16px;margin-top:4px">↩ กลับหน้าหลัก</button>
+              </div>
+
+              <!-- Stage Clear -->
+              <div id="rg-stage-clear-screen" class="screen hidden">
+                <div class="overlay-title" style="color:#7fff00">✅ STAGE CLEAR!</div>
+                <div class="overlay-info" id="rg-clearInfo"></div>
+                <button class="overlay-btn btn-green" id="rg-nextStageBtn" onclick="rg_goNextStage()">▶ ด่านถัดไป</button>
+                <button class="overlay-btn btn-yellow" onclick="rg_backToShop()">↩ หน้าหลัก</button>
+              </div>
+
+              <!-- Stage Fail -->
+              <div id="rg-stage-fail-screen" class="screen hidden">
+                <div class="overlay-title" style="color:#ff4444">❌ ไม่ผ่านด่าน!</div>
+                <div class="overlay-info" id="rg-failInfo"></div>
+                <button class="overlay-btn btn-red" onclick="rg_retryStage()">↺ ลองใหม่</button>
+                <button class="overlay-btn btn-yellow" onclick="rg_backToShop()">↩ หน้าหลัก</button>
+              </div>
+
+              <!-- Game Complete -->
+              <div id="rg-game-complete-screen" class="screen hidden">
+                <div class="overlay-title" style="color:#ffe600;font-size:clamp(0.7rem,2.5vw,1.2rem)">🏆 ผ่านครบ 10 ด่าน!</div>
+                <div class="overlay-info" id="rg-completeInfo"></div>
+                <button class="overlay-btn btn-yellow" onclick="rg_backToShop()">↩ เล่นใหม่</button>
+              </div>
+
+              <!-- Canvas -->
+              <canvas id="rg-canvas"></canvas>
+
+              <!-- Mobile D-Pad -->
+              <div id="rg-mobile-dpad">
+                <button class="rg-dpad-btn" ontouchstart="rg_e_move(-1,event)" ontouchend="rg_e_stopMove(event)" onmousedown="rg_e_move(-1,event)" onmouseup="rg_e_stopMove(event)">◀</button>
+                <button class="rg-dpad-btn" ontouchstart="rg_e_move(1,event)" ontouchend="rg_e_stopMove(event)" onmousedown="rg_e_move(1,event)" onmouseup="rg_e_stopMove(event)">▶</button>
+              </div>
+
+            </div><!-- /#rg-outer -->
+
+          </div><!-- /#recycle-game-wrapper -->
+        </div><!-- /#view-recycle -->
+
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bg-white border-t border-gray-200 fixed bottom-0 w-full max-w-md pb-safe z-50 rounded-t-3xl shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
+      <div class="flex justify-around items-center h-20 px-2">
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn active flex flex-col items-center p-2 relative w-14">
+          <i class="fa-solid fa-house text-xl mb-1"></i>
+          <span class="text-[10px] font-bold heading-font">หน้าแรก</span>
+        </button>
+        
+        <button onclick="switchTab('community')" id="nav-community" class="nav-btn flex flex-col items-center p-2 relative w-14">
+          <i class="fa-solid fa-users text-xl mb-1"></i>
+          <span class="text-[10px] font-bold heading-font">เพื่อน</span>
+        </button>
+
+        <button onclick="switchTab('game')" id="nav-game" class="nav-btn flex flex-col items-center p-2 relative w-14 -mt-6">
+          <div class="w-14 h-14 bg-eco-500 text-white rounded-full flex items-center justify-center text-2xl shadow-lg border-4 border-white">
+            <i class="fa-solid fa-leaf"></i>
+          </div>
+          <span class="text-[10px] font-bold heading-font mt-1">เกาะ</span>
+        </button>
+
+        <button onclick="switchTab('recycle')" id="nav-recycle" class="nav-btn flex flex-col items-center p-2 relative w-14 -mt-4">
+          <div class="w-12 h-12 bg-yellow-500 text-white rounded-full flex items-center justify-center text-xl shadow-lg border-4 border-white">
+            🗑️
+          </div>
+          <span class="text-[10px] font-bold heading-font mt-1">เกมขยะ</span>
+        </button>
+
+        <button onclick="switchTab('history')" id="nav-history" class="nav-btn flex flex-col items-center p-2 relative w-14">
+          <i class="fa-solid fa-book-open text-xl mb-1"></i>
+          <span class="text-[10px] font-bold heading-font">ประวัติ</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <script>
+    // ================= CONFIGURATION =================
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxpdVTEwoLgLyYsjcrtBk9QVzNWMw0IKcAgm8x9KpZ9cdOUDuJiw2CAFvEmP8IN5_X1/exec'; 
+
+    // ================= STATE =================
+    let currentIdStore = ''; 
+    let currentPassStore = ''; 
+    let studentInfo = null;
+    let studentStats = { totalWeight: 0, totalMoney: 0, totalPoints: 0 };
+    let txHistory = [];
+    let classmates = [];
+    
+    // Game State
+    let currentPoints = 0; 
+    let spentPoints = 0;
+    let selectedTool = null; // 'move', 'tree', 'flower', 'windmill', 'delete'
+    let selectedCost = 0;
+    
+    // Grid Size
+    let COLS = 5; // เริ่มต้นที่ 5 คอลัมน์ 
+    let ROWS = 5; // 5 แถว (รวม 25 ช่อง) ขยาย COLS ทีละ 1 จะได้ +5 ช่องเป๊ะๆ
+    let islandGrid = [];
+
+    // Drag and Drop Variables
+    let isDragging = false;
+    let draggedItem = null;
+    let dragOrigGrid = null;
+    let pointerX = 0;
+    let pointerY = 0;
+
+    // Costs
+    const ITEM_COSTS = { 'flower': 10, 'bush': 15, 'tree': 30, 'birdhouse': 40, 'solar': 80, 'windmill': 100, 'fountain': 150, 'expand': 150, 'mysterybox': 50, 'goldentree': 50, 'crystal': 50, 'castle': 50, 'snowman': 50 };
+
+    // ================= API =================
+    async function callBackend(action, payload) {
+      if (SCRIPT_URL.includes('YOUR_APP_SCRIPT_URL_HERE')) {
+         throw new Error("กรุณาใส่ SCRIPT_URL ที่ได้จาก Apps Script ครับ");
+      }
+      try {
+        const response = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: action, ...payload })
+        });
+        return await response.json();
+      } catch (error) {
+        throw error;
+      }
+    }
+
+    function extractDateString(val) {
+        if (!val) return '';
+        if (typeof val === 'string') {
+            if (val.includes('T')) return val.split('T')[0];
+            if (val.match(/^\d{4}-\d{2}-\d{2}$/)) return val;
+        }
+        let d = new Date(val);
+        if(!isNaN(d.getTime())) return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        return val;
+    }
+
+    // ================= APP LOGIC =================
+    async function doStudentLogin() {
+      const id = document.getElementById('studentId').value;
+      const pass = document.getElementById('studentPass').value;
+      const btn = document.getElementById('loginBtn');
+      btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> กำลังโหลด...';
+      btn.disabled = true;
+
+      try {
+        let res = await callBackend('studentLogin', {studentId: id, password: pass});
+        
+        if (res.status === 'success') {
+          currentIdStore = id;
+          currentPassStore = pass;
+          
+          studentInfo = res.student;
+          studentStats = res.stats;
+          txHistory = res.history;
+          
+          // กำหนดขนาดเริ่มต้น
+          COLS = 5; ROWS = 5;
+          islandGrid = Array(COLS).fill().map(() => Array(ROWS).fill(null));
+          
+          // Parse Game State
+          try {
+             if (res.gameState) {
+                 const savedGrid = JSON.parse(res.gameState);
+                 if(Array.isArray(savedGrid) && savedGrid.length > 0 && Array.isArray(savedGrid[0])) {
+                     islandGrid = savedGrid;
+                     COLS = islandGrid.length;
+                     ROWS = islandGrid[0].length;
+                 }
+             }
+          } catch(e) { console.log("New game state"); }
+
+          updateDashboardUI();
+          renderHistory();
+          calculateCurrentPoints();
+          
+          document.getElementById('loginView').classList.add('hidden');
+          document.getElementById('mainAppView').classList.remove('hidden');
+          
+          initGameEngine();
+          loadClassmates();
+          
+          Swal.fire({
+            title: 'ยินดีต้อนรับ!',
+            text: `พิทักษ์โลกกันเถอะ ${studentInfo.name}`,
+            icon: 'success',
+            timer: 1500,
+            showConfirmButton: false
+          });
+        } else {
+          Swal.fire({icon: 'error', title: 'ว้าา...', text: res.message});
+        }
+      } catch (err) {
+        Swal.fire({icon: 'error', title: 'เกิดข้อผิดพลาด', text: err.toString()});
+      } finally {
+        btn.innerHTML = 'เข้าสู่โลกสีเขียว <i class="fa-solid fa-arrow-right"></i>';
+        btn.disabled = false;
+      }
+    }
+
+    async function refreshData() {
+      const iconDash = document.getElementById('refreshIconDash');
+      const iconHist = document.getElementById('refreshIconHist');
+      if (iconDash) iconDash.classList.add('fa-spin');
+      if (iconHist) iconHist.classList.add('fa-spin');
+
+      try {
+        let res = await callBackend('studentLogin', {studentId: currentIdStore, password: currentPassStore});
+        if (res.status === 'success') {
+          studentStats = res.stats;
+          txHistory = res.history;
+          
+          updateDashboardUI();
+          renderHistory();
+          calculateCurrentPoints();
+          loadClassmates();
+          
+          Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'ดึงข้อมูลล่าสุดเรียบร้อย!', showConfirmButton: false, timer: 1500});
+        }
+      } catch (err) {
+        Swal.fire({toast: true, position: 'top-end', icon: 'error', title: 'ดึงข้อมูลล้มเหลว', showConfirmButton: false, timer: 1500});
+      } finally {
+        if (iconDash) iconDash.classList.remove('fa-spin');
+        if (iconHist) iconHist.classList.remove('fa-spin');
+      }
+    }
+
+    function logout() {
+      studentInfo = null;
+      currentIdStore = '';
+      currentPassStore = '';
+      
+      COLS = 5; ROWS = 5;
+      islandGrid = Array(COLS).fill().map(() => Array(ROWS).fill(null));
+      
+      document.getElementById('mainAppView').classList.add('hidden');
+      document.getElementById('loginView').classList.remove('hidden');
+      document.getElementById('studentId').value = '';
+      document.getElementById('studentPass').value = '';
+      cancelAnimationFrame(animFrameId);
+      
+      // Reset modes
+      isVisitMode = false;
+      if (document.getElementById('shopArea')) document.getElementById('shopArea').classList.remove('hidden');
+      if (document.getElementById('visitModeHeader')) document.getElementById('visitModeHeader').classList.add('hidden');
+    }
+
+    function updateDashboardUI() {
+      document.getElementById('displayName').innerText = `${studentInfo.title}${studentInfo.name} ${studentInfo.surname}`;
+      document.getElementById('displayRoom').innerText = `ห้อง ${studentInfo.room}`;
+      document.getElementById('stat-weight').innerText = studentStats.totalWeight.toFixed(2);
+      document.getElementById('stat-money').innerText = studentStats.totalMoney.toFixed(2);
+      document.getElementById('stat-points').innerText = studentStats.totalPoints;
+    }
+
+    function renderHistory() {
+      const container = document.getElementById('historyList');
+      container.innerHTML = '';
+
+      if (txHistory.length === 0) {
+        container.innerHTML = '<div class="text-center text-gray-400 py-8 glass-card">ยังไม่มีประวัติการฝากขยะ<br>เริ่มคัดแยกขยะกันเถอะ!</div>';
+        return;
+      }
+
+      txHistory.forEach(t => {
+        const dStr = extractDateString(t.date);
+        const item = document.createElement('div');
+        item.className = 'glass-card p-4 flex justify-between items-center';
+        // ค่าเริ่มต้น (สำหรับฝากขยะปกติ)
+        let iconHtml = '<div class="w-10 h-10 bg-eco-100 rounded-full flex items-center justify-center text-eco-500"><i class="fa-solid fa-recycle"></i></div>';
+        let detailHtml = `<div class="text-xs text-gray-500"><i class="fa-regular fa-calendar"></i> ${dStr} | ${parseFloat(t.weight).toFixed(2)} กก.</div>`;
+        let moneyHtml = `<div class="heading-font font-bold text-blue-600">+฿${parseFloat(t.price).toFixed(2)}</div>`;
+        let pointsHtml = `<div class="text-xs font-bold text-amber-500"><i class="fa-solid fa-star"></i> ${t.points}</div>`;
+
+        // ตรวจสอบว่าเป็นการโอนแต้มหรือไม่ (น้ำหนักและเงินเป็น 0)
+        if (parseFloat(t.weight) === 0 && parseFloat(t.price) === 0) {
+            if (t.points < 0) {
+                // กรณีเป็นคนโอนแต้มให้เพื่อน (แต้มติดลบ)
+                iconHtml = '<div class="w-10 h-10 bg-rose-100 rounded-full flex items-center justify-center text-rose-500"><i class="fa-solid fa-gift"></i></div>';
+                detailHtml = `<div class="text-xs text-gray-500"><i class="fa-regular fa-calendar"></i> ${dStr}</div>`;
+                moneyHtml = ``; // ซ่อนยอดเงิน
+                pointsHtml = `<div class="heading-font font-bold text-rose-500">${t.points} <i class="fa-solid fa-star"></i></div>`;
+            } else {
+                // กรณีเป็นคนรับโอนแต้ม (แต้มเป็นบวก)
+                iconHtml = '<div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center text-amber-500"><i class="fa-solid fa-hand-holding-heart"></i></div>';
+                detailHtml = `<div class="text-xs text-gray-500"><i class="fa-regular fa-calendar"></i> ${dStr}</div>`;
+                moneyHtml = ``; // ซ่อนยอดเงิน
+                pointsHtml = `<div class="heading-font font-bold text-amber-500">+${t.points} <i class="fa-solid fa-star"></i></div>`;
+            }
+        }
+
+        item.innerHTML = `
+          <div class="flex items-center gap-3">
+             ${iconHtml}
+             <div>
+               <div class="heading-font font-bold text-gray-800">${t.wasteType}</div>
+               ${detailHtml}
+             </div>
+          </div>
+          <div class="text-right">
+             ${moneyHtml}
+             ${pointsHtml}
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.content-view').forEach(el => el.classList.add('hidden'));
+      document.getElementById('view-' + tabId).classList.remove('hidden');
+      
+      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById('nav-' + tabId).classList.add('active');
+
+      if (tabId === 'game') resizeCanvas();
+    }
+
+    // ================= COMMUNITY LOGIC =================
+    let isVisitMode = false;
+    let myIslandBackup = null;
+    let myColsBackup = 5;
+
+    async function loadClassmates() {
+      const icon = document.getElementById('refreshIconCommunity');
+      if(icon) icon.classList.add('fa-spin');
+      try {
+        let res = await callBackend('getClassmates', { room: studentInfo.room, currentId: studentInfo.id });
+        if (res.status === 'success') {
+          classmates = res.data;
+          renderClassmates();
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if(icon) icon.classList.remove('fa-spin');
+      }
+    }
+
+    function renderClassmates() {
+      const container = document.getElementById('classmateList');
+      container.innerHTML = '';
+      
+      if (classmates.length === 0) {
+        container.innerHTML = '<div class="text-center text-gray-400 py-8">ไม่มีเพื่อนในห้องนี้</div>';
+        return;
+      }
+
+      classmates.forEach(c => {
+        const item = document.createElement('div');
+        item.className = 'glass-card p-3 flex justify-between items-center';
+        item.innerHTML = `
+          <div class="flex items-center gap-3">
+             <div class="w-10 h-10 bg-sky-100 rounded-full flex items-center justify-center text-sky-500 font-bold">${c.name.charAt(0)}</div>
+             <div>
+               <div class="heading-font font-bold text-gray-800">${c.name} ${c.surname.substring(0,3)}.</div>
+               <div class="text-[10px] text-gray-500">รหัส: ${c.id}</div>
+             </div>
+          </div>
+          <div class="flex flex-col gap-1">
+             <button onclick="visitFriend('${c.id}', '${c.name}')" class="bg-eco-100 text-eco-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-eco-200 transition border border-eco-200"><i class="fa-solid fa-eye"></i> ส่องเกาะ</button>
+             <button onclick="transferPointsUI('${c.id}', '${c.name}')" class="bg-amber-100 text-amber-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-amber-200 transition border border-amber-200"><i class="fa-solid fa-gift"></i> โอนแต้ม</button>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    async function visitFriend(friendId, friendName) {
+      Swal.fire({ title: 'กำลังเดินทาง...', didOpen: () => Swal.showLoading() });
+      try {
+        let res = await callBackend('getFriendIsland', { friendId: friendId });
+        if (res.status === 'success') {
+          // สำรองเกาะตัวเองไว้
+          myIslandBackup = JSON.parse(JSON.stringify(islandGrid));
+          myColsBackup = COLS;
+          
+          let friendGrid = Array(5).fill().map(() => Array(5).fill(null));
+          if (res.gameState) {
+             try { 
+                const parsed = JSON.parse(res.gameState);
+                if(Array.isArray(parsed) && parsed.length > 0) {
+                    friendGrid = parsed;
+                }
+             } catch(e) {}
+          }
+          
+          islandGrid = friendGrid;
+          COLS = islandGrid.length;
+          ROWS = islandGrid[0].length;
+          
+          // ล็อกปุ่มให้แก้ไขไม่ได้
+          isVisitMode = true;
+          document.getElementById('shopArea').classList.add('hidden');
+          document.getElementById('visitModeHeader').classList.remove('hidden');
+          
+          Swal.close();
+          switchTab('game');
+          
+          Swal.fire({toast: true, position: 'top', icon: 'info', title: `กำลังชมเกาะของ ${friendName}`, showConfirmButton: false, timer: 2000});
+        }
+      } catch (err) {
+        Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเข้าชมเกาะเพื่อนได้', 'error');
+      }
+    }
+
+    function returnHome() {
+      // ดึงเกาะตัวเองกลับมา
+      islandGrid = JSON.parse(JSON.stringify(myIslandBackup));
+      COLS = myColsBackup;
+      ROWS = islandGrid[0].length;
+      
+      // ปลดล็อกปุ่ม
+      isVisitMode = false;
+      document.getElementById('shopArea').classList.remove('hidden');
+      document.getElementById('visitModeHeader').classList.add('hidden');
+      resizeCanvas();
+    }
+
+    function transferPointsUI(friendId, friendName) {
+      Swal.fire({
+        title: `โอนแต้มให้ ${friendName}`,
+        html: `<div class="text-sm mb-2">แต้มที่โอนได้: <b class="text-amber-500">${currentPoints} แต้ม</b></div>
+               <input type="number" id="transferAmount" class="swal2-input text-center font-bold" placeholder="ระบุจำนวนแต้ม" min="1" max="${currentPoints}">`,
+        showCancelButton: true,
+        confirmButtonText: 'ยืนยันโอน',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#f59e0b',
+        preConfirm: () => {
+          const amt = parseInt(document.getElementById('transferAmount').value);
+          if (!amt || amt <= 0) return Swal.showValidationMessage('กรุณาระบุจำนวนแต้มที่ถูกต้อง');
+          if (amt > currentPoints) return Swal.showValidationMessage('แต้มของคุณไม่เพียงพอ');
+          return amt;
+        }
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          const amount = result.value;
+          Swal.fire({ title: 'กำลังโอนแต้ม...', didOpen: () => Swal.showLoading() });
+          
+          const dStr = extractDateString(new Date());
+          const payload = {
+            senderId: studentInfo.id,
+            senderName: studentInfo.name,
+            receiverId: friendId,
+            receiverName: friendName,
+            room: studentInfo.room,
+            amount: amount,
+            date: dStr
+          };
+          
+          try {
+             let res = await callBackend('transferPoints', { data: payload });
+             if (res.status === 'success') {
+                Swal.fire('สำเร็จ!', `โอน ${amount} แต้มให้ ${friendName} แล้ว`, 'success');
+                refreshData(); // อัปเดตยอดแต้มตัวเอง
+             }
+          } catch(e) {
+             Swal.fire('ล้มเหลว', 'เกิดข้อผิดพลาดในการโอน', 'error');
+          }
+        }
+      });
+    }
+
+    // ================= GAME ENGINE (HTML5 CANVAS) =================
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    let animFrameId;
+    let canvasW, canvasH;
+    let tileSize;
+    let offsetX, offsetY;
+
+    function calculateCurrentPoints() {
+      spentPoints = 0;
+      for (let x = 0; x < COLS; x++) {
+        for (let y = 0; y < ROWS; y++) {
+          if (islandGrid[x][y] && ITEM_COSTS[islandGrid[x][y]]) {
+            spentPoints += ITEM_COSTS[islandGrid[x][y]];
+          }
+        }
+      }
+      
+      // เพิ่มค่าใช้จ่ายจากการขยายที่ดิน (เกินจาก 5 คอลัมน์แรก)
+      const extraCols = Math.max(0, COLS - 5);
+      spentPoints += (extraCols * ITEM_COSTS['expand']);
+
+      currentPoints = studentStats.totalPoints - spentPoints;
+      
+      document.getElementById('stat-spent').innerText = spentPoints;
+      document.getElementById('game-current-points').innerText = currentPoints;
+      updateShopUI();
+    }
+
+    function selectShopItem(type, cost) {
+      document.querySelectorAll('.shop-item').forEach(el => el.classList.remove('selected'));
+      
+      if (type !== 'delete' && type !== 'move' && currentPoints < cost) {
+         Swal.fire({toast: true, position: 'top-end', icon: 'error', title: 'แต้มไม่พอจ้า', showConfirmButton: false, timer: 1500});
+         selectedTool = null;
+         return;
+      }
+      
+      selectedTool = type;
+      selectedCost = cost;
+      document.getElementById('shop-' + type).classList.add('selected');
+    }
+
+    function buyExpansion() {
+       if (currentPoints >= ITEM_COSTS['expand']) {
+          // เพิ่มที่ดินโดยเพิ่มอีก 1 คอลัมน์ (ซึ่งมีแถว = 5 แถว จะได้เพิ่ม 5 ช่องพอดี)
+          islandGrid.push(Array(ROWS).fill(null));
+          COLS++;
+          
+          calculateCurrentPoints();
+          resizeCanvas(); // จัดกล้องใหม่
+          createParticles(canvasW/2, canvasH/2, '#fcd34d');
+          
+          Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'ขยายเกาะสำเร็จ! (+5 ช่อง)', showConfirmButton: false, timer: 2000});
+          saveGameToCloud();
+       } else {
+          Swal.fire({toast: true, position: 'top-end', icon: 'error', title: 'แต้มไม่พอซื้อที่ดิน', showConfirmButton: false, timer: 1500});
+       }
+    }
+
+    function updateShopUI() {
+      ['flower', 'bush', 'tree', 'birdhouse', 'solar', 'windmill', 'fountain', 'expand', 'mysterybox'].forEach(type => {
+         const el = document.getElementById('shop-' + type);
+         if (el && currentPoints < ITEM_COSTS[type]) {
+             el.classList.add('disabled');
+         } else if (el) {
+             el.classList.remove('disabled');
+         }
+      });
+    }
+
+    function resizeCanvas() {
+      const container = document.getElementById('gameContainer');
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientHeight;
+      canvasW = canvas.width;
+      canvasH = canvas.height;
+      
+      tileSize = Math.min(canvasW / (COLS + 1.5), canvasH / (ROWS + 1.5));
+      offsetX = (canvasW - (COLS * tileSize)) / 2;
+      offsetY = (canvasH - (ROWS * tileSize)) / 2 + (tileSize/2); 
+    }
+
+    // === Mouse/Touch Event Handlers ===
+    function getPointerPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return { x: clientX - rect.left, y: clientY - rect.top };
+    }
+
+    function getGridPos(px, py) {
+       const gridX = Math.floor((px - offsetX) / tileSize);
+       const gridY = Math.floor((py - offsetY) / tileSize);
+       if (gridX >= 0 && gridX < COLS && gridY >= 0 && gridY < ROWS) return {x: gridX, y: gridY};
+       return null;
+    }
+
+    function handlePointerDown(e) {
+       if (isVisitMode) return; // ล็อกไม่ให้แก้เกาะเพื่อน
+       if (!selectedTool) return;
+       const pos = getPointerPos(e);
+       pointerX = pos.x; pointerY = pos.y;
+       const gridPos = getGridPos(pos.x, pos.y);
+
+       if (!gridPos) return;
+
+       if (selectedTool === 'move') {
+           if (islandGrid[gridPos.x][gridPos.y]) {
+               isDragging = true;
+               draggedItem = islandGrid[gridPos.x][gridPos.y];
+               dragOrigGrid = gridPos;
+               islandGrid[gridPos.x][gridPos.y] = null; // ย้ายออกจากกระดานชั่วคราว
+           }
+       } else if (selectedTool === 'delete') {
+           if (islandGrid[gridPos.x][gridPos.y]) {
+               islandGrid[gridPos.x][gridPos.y] = null;
+               calculateCurrentPoints();
+               createParticles(pos.x, pos.y, '#9ca3af');
+           }
+       } else { // ปลูก
+           if (!islandGrid[gridPos.x][gridPos.y]) {
+               if (currentPoints >= selectedCost) {
+                   if (selectedTool === 'mysterybox') {
+                       // สุ่มของแรร์
+                       const rareItems = ['goldentree', 'crystal', 'castle', 'snowman'];
+                       const randomItem = rareItems[Math.floor(Math.random() * rareItems.length)];
+                       islandGrid[gridPos.x][gridPos.y] = randomItem;
+                       calculateCurrentPoints();
+                       createParticles(pos.x, pos.y, '#a855f7');
+                       
+                       let itemNameTH = '';
+                       if (randomItem === 'goldentree') itemNameTH = 'ต้นไม้ทองคำ';
+                       if (randomItem === 'crystal') itemNameTH = 'คริสตัลเวทมนตร์';
+                       if (randomItem === 'castle') itemNameTH = 'ปราสาททราย';
+                       if (randomItem === 'snowman') itemNameTH = 'ตุ๊กตาหิมะ';
+                       
+                       Swal.fire({
+                          title: 'ยินดีด้วย!',
+                          html: `คุณเปิดกล่องสุ่มได้ <b>${itemNameTH}</b> ระดับแรร์!`,
+                          icon: 'success',
+                          confirmButtonColor: '#22c55e'
+                       });
+                       
+                       selectedTool = null;
+                       document.querySelectorAll('.shop-item').forEach(el => el.classList.remove('selected'));
+                   } else {
+                       islandGrid[gridPos.x][gridPos.y] = selectedTool;
+                       calculateCurrentPoints();
+                       createParticles(pos.x, pos.y, '#4ade80');
+                   }
+               } else {
+                   Swal.fire({toast: true, position: 'top-end', icon: 'warning', title: 'แต้มหมดแล้ว!', showConfirmButton: false, timer: 1500});
+               }
+           } else {
+               Swal.fire({toast: true, position: 'top-end', icon: 'info', title: 'ช่องนี้มีของแล้วจ้า', showConfirmButton: false, timer: 1000});
+           }
+       }
+    }
+
+    function handlePointerMove(e) {
+       if (!isDragging) return;
+       e.preventDefault(); // ป้องกันหน้าจอเลื่อนเวลาลาก
+       const pos = getPointerPos(e);
+       pointerX = pos.x; pointerY = pos.y;
+    }
+
+    function handlePointerUp(e) {
+       if (isDragging) {
+           e.preventDefault();
+           let gridPos = null;
+           
+           if (e.changedTouches) {
+               const rect = canvas.getBoundingClientRect();
+               gridPos = getGridPos(e.changedTouches[0].clientX - rect.left, e.changedTouches[0].clientY - rect.top);
+           } else {
+               gridPos = getGridPos(pointerX, pointerY);
+           }
+
+           // ถ้าย้ายไปช่องว่าง ให้วางสำเร็จ
+           if (gridPos && islandGrid[gridPos.x][gridPos.y] === null) {
+               islandGrid[gridPos.x][gridPos.y] = draggedItem;
+               createParticles(pointerX, pointerY, '#fbbf24');
+           } else {
+               // ถ้าย้ายไม่สำเร็จ หรือวางทับของเดิม ให้เด้งกลับที่เดิม
+               islandGrid[dragOrigGrid.x][dragOrigGrid.y] = draggedItem;
+           }
+           
+           isDragging = false;
+           draggedItem = null;
+       }
+    }
+
+    // Attach Event Listeners
+    canvas.addEventListener('mousedown', handlePointerDown);
+    canvas.addEventListener('mousemove', handlePointerMove);
+    window.addEventListener('mouseup', handlePointerUp);
+    
+    canvas.addEventListener('touchstart', handlePointerDown, {passive: false});
+    canvas.addEventListener('touchmove', handlePointerMove, {passive: false});
+    window.addEventListener('touchend', handlePointerUp);
+    window.addEventListener('touchcancel', handlePointerUp);
+
+    // ================= TAKE SNAPSHOT =================
+    function takeSnapshot() {
+       try {
+           const dataURL = canvas.toDataURL('image/png');
+           const link = document.createElement('a');
+           link.download = `EcoValley_${studentInfo.name}.png`;
+           link.href = dataURL;
+           link.click();
+           Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'ดาวน์โหลดภาพสำเร็จ! แบ่งปันเลย!', showConfirmButton: false, timer: 2000});
+       } catch (err) {
+           Swal.fire('ข้อผิดพลาด', 'ไม่สามารถบันทึกภาพได้', 'error');
+       }
+    }
+
+    // ================= GRAPHICS RENDERER =================
+    let particles = [];
+    function createParticles(x, y, color) {
+       for(let i=0; i<10; i++){
+           particles.push({ x: x, y: y, vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5, life: 1, color: color });
+       }
+    }
+
+    function drawGrid() {
+      ctx.fillStyle = '#86efac';
+      ctx.beginPath();
+      ctx.roundRect(offsetX - 10, offsetY - 10, COLS*tileSize + 20, ROWS*tileSize + 20, 20);
+      ctx.fill();
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = '#4ade80';
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.lineWidth = 2;
+      for (let x = 0; x <= COLS; x++) {
+          ctx.beginPath(); ctx.moveTo(offsetX + x*tileSize, offsetY); ctx.lineTo(offsetX + x*tileSize, offsetY + ROWS*tileSize); ctx.stroke();
+      }
+      for (let y = 0; y <= ROWS; y++) {
+          ctx.beginPath(); ctx.moveTo(offsetX, offsetY + y*tileSize); ctx.lineTo(offsetX + COLS*tileSize, offsetY + y*tileSize); ctx.stroke();
+      }
+    }
+
+    function drawItem(type, cx, cy, time) {
+       const half = tileSize / 2;
+       ctx.save();
+       ctx.translate(cx, cy);
+
+       if (type === 'tree') {
+           ctx.fillStyle = '#713f12';
+           ctx.fillRect(-tileSize*0.1, 0, tileSize*0.2, tileSize*0.4);
+           const swing = Math.sin(time * 0.002) * 2; 
+           ctx.translate(swing, 0);
+           ctx.fillStyle = '#16a34a';
+           ctx.beginPath(); ctx.arc(0, -tileSize*0.2, tileSize*0.3, 0, Math.PI*2); ctx.fill();
+           ctx.fillStyle = '#22c55e';
+           ctx.beginPath(); ctx.arc(-tileSize*0.2, -tileSize*0.1, tileSize*0.25, 0, Math.PI*2); ctx.fill();
+           ctx.beginPath(); ctx.arc(tileSize*0.2, -tileSize*0.1, tileSize*0.25, 0, Math.PI*2); ctx.fill();
+       } 
+       else if (type === 'flower') {
+           ctx.strokeStyle = '#22c55e'; ctx.lineWidth = 3;
+           ctx.beginPath(); ctx.moveTo(0, tileSize*0.3); ctx.lineTo(0, 0); ctx.stroke();
+           ctx.rotate(time * 0.001);
+           ctx.fillStyle = '#ec4899';
+           for(let i=0; i<5; i++){
+               ctx.rotate((Math.PI*2)/5);
+               ctx.beginPath(); ctx.arc(0, -tileSize*0.15, tileSize*0.12, 0, Math.PI*2); ctx.fill();
+           }
+           ctx.fillStyle = '#fef08a';
+           ctx.beginPath(); ctx.arc(0, 0, tileSize*0.1, 0, Math.PI*2); ctx.fill();
+       }
+       else if (type === 'bush') {
+           ctx.fillStyle = '#15803d'; // dark green
+           const breathe = Math.sin(time * 0.003) * 1.5; // หายใจพองยุบเบาๆ
+           ctx.translate(0, tileSize*0.1 + breathe);
+           ctx.beginPath(); ctx.arc(-tileSize*0.15, 0, tileSize*0.2, 0, Math.PI*2); ctx.fill();
+           ctx.beginPath(); ctx.arc(tileSize*0.15, 0, tileSize*0.2, 0, Math.PI*2); ctx.fill();
+           ctx.beginPath(); ctx.arc(0, -tileSize*0.15, tileSize*0.25, 0, Math.PI*2); ctx.fill();
+           ctx.fillStyle = '#ef4444'; // red berries
+           ctx.beginPath(); ctx.arc(-tileSize*0.1, -tileSize*0.1, 3, 0, Math.PI*2); ctx.fill();
+           ctx.beginPath(); ctx.arc(tileSize*0.1, -tileSize*0.15, 3, 0, Math.PI*2); ctx.fill();
+           ctx.beginPath(); ctx.arc(0, tileSize*0.05, 3, 0, Math.PI*2); ctx.fill();
+       }
+       else if (type === 'birdhouse') {
+           ctx.fillStyle = '#78350f'; // pole
+           ctx.fillRect(-2, 0, 4, tileSize*0.4);
+           ctx.translate(0, -tileSize*0.15);
+           ctx.fillStyle = '#d97706'; // box
+           ctx.fillRect(-tileSize*0.15, -tileSize*0.15, tileSize*0.3, tileSize*0.3);
+           ctx.fillStyle = '#b45309'; // roof
+           ctx.beginPath(); ctx.moveTo(-tileSize*0.2, -tileSize*0.15); ctx.lineTo(0, -tileSize*0.3); ctx.lineTo(tileSize*0.2, -tileSize*0.15); ctx.fill();
+           ctx.fillStyle = '#451a03'; // hole
+           ctx.beginPath(); ctx.arc(0, -tileSize*0.05, 4, 0, Math.PI*2); ctx.fill();
+           
+           // Animated bird flying around
+           ctx.rotate(time * 0.002);
+           ctx.fillStyle = '#38bdf8'; // blue bird
+           ctx.beginPath(); ctx.arc(tileSize*0.3, 0, 3, 0, Math.PI*2); ctx.fill();
+       }
+       else if (type === 'solar') {
+           ctx.fillStyle = '#94a3b8'; // stand
+           ctx.fillRect(-3, tileSize*0.1, 6, tileSize*0.3);
+           ctx.translate(0, tileSize*0.05);
+           ctx.rotate(Math.PI / 8); // slanted
+           
+           // Panel base
+           ctx.fillStyle = '#0ea5e9'; 
+           ctx.fillRect(-tileSize*0.3, -tileSize*0.2, tileSize*0.6, tileSize*0.4);
+           ctx.strokeStyle = '#e0f2fe'; ctx.lineWidth = 1.5;
+           ctx.strokeRect(-tileSize*0.3, -tileSize*0.2, tileSize*0.6, tileSize*0.4);
+           
+           // Grid lines
+           ctx.beginPath(); ctx.moveTo(0, -tileSize*0.2); ctx.lineTo(0, tileSize*0.2); ctx.stroke();
+           ctx.beginPath(); ctx.moveTo(-tileSize*0.3, 0); ctx.lineTo(tileSize*0.3, 0); ctx.stroke();
+       }
+       else if (type === 'fountain') {
+           // Base
+           ctx.fillStyle = '#94a3b8'; 
+           ctx.beginPath(); ctx.ellipse(0, tileSize*0.2, tileSize*0.35, tileSize*0.15, 0, 0, Math.PI*2); ctx.fill();
+           ctx.fillStyle = '#e2e8f0'; 
+           ctx.beginPath(); ctx.ellipse(0, tileSize*0.15, tileSize*0.3, tileSize*0.12, 0, 0, Math.PI*2); ctx.fill();
+           
+           // Water Pool
+           ctx.fillStyle = '#38bdf8';
+           ctx.beginPath(); ctx.ellipse(0, tileSize*0.15, tileSize*0.25, tileSize*0.1, 0, 0, Math.PI*2); ctx.fill();
+           
+           // Pillar
+           ctx.fillStyle = '#cbd5e1';
+           ctx.fillRect(-4, -tileSize*0.15, 8, tileSize*0.3);
+           ctx.beginPath(); ctx.ellipse(0, -tileSize*0.15, tileSize*0.15, tileSize*0.05, 0, 0, Math.PI*2); ctx.fill();
+           
+           // Animated water spray
+           const sprayHeight = Math.abs(Math.sin(time*0.005)) * tileSize*0.15;
+           ctx.fillStyle = 'rgba(125, 211, 252, 0.8)';
+           ctx.beginPath(); ctx.arc(0, -tileSize*0.2 - sprayHeight, 4, 0, Math.PI*2); ctx.fill();
+           ctx.beginPath(); ctx.arc(-6, -tileSize*0.15 - sprayHeight*0.8, 3, 0, Math.PI*2); ctx.fill();
+           ctx.beginPath(); ctx.arc(6, -tileSize*0.15 - sprayHeight*0.8, 3, 0, Math.PI*2); ctx.fill();
+       }
+       else if (type === 'windmill') {
+           ctx.fillStyle = '#e2e8f0';
+           ctx.beginPath(); ctx.moveTo(-tileSize*0.2, tileSize*0.4); ctx.lineTo(tileSize*0.2, tileSize*0.4);
+           ctx.lineTo(tileSize*0.1, -tileSize*0.2); ctx.lineTo(-tileSize*0.1, -tileSize*0.2); ctx.fill();
+           ctx.translate(0, -tileSize*0.2);
+           ctx.rotate(time * 0.002); 
+           ctx.fillStyle = '#38bdf8';
+           for(let i=0; i<4; i++){
+               ctx.rotate(Math.PI/2);
+               ctx.beginPath(); ctx.roundRect(0, -2, tileSize*0.4, 4, 2); ctx.fill();
+           }
+           ctx.fillStyle = '#0f172a';
+           ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI*2); ctx.fill();
+       }
+       
+       // --- RARE ITEMS (Mystery Box) ---
+       else if (type === 'goldentree') {
+           ctx.fillStyle = '#b45309'; // brown trunk
+           ctx.fillRect(-tileSize*0.1, 0, tileSize*0.2, tileSize*0.4);
+           const swing = Math.sin(time * 0.002) * 2; 
+           ctx.translate(swing, 0);
+           
+           let grad = ctx.createRadialGradient(0, -tileSize*0.2, 0, 0, -tileSize*0.2, tileSize*0.4);
+           grad.addColorStop(0, '#fef08a');
+           grad.addColorStop(1, '#eab308');
+           ctx.fillStyle = grad;
+           
+           ctx.beginPath(); ctx.arc(0, -tileSize*0.2, tileSize*0.3, 0, Math.PI*2); ctx.fill();
+           ctx.beginPath(); ctx.arc(-tileSize*0.2, -tileSize*0.1, tileSize*0.25, 0, Math.PI*2); ctx.fill();
+           ctx.beginPath(); ctx.arc(tileSize*0.2, -tileSize*0.1, tileSize*0.25, 0, Math.PI*2); ctx.fill();
+           
+           ctx.fillStyle = '#ffffff';
+           if (Math.floor(time / 200) % 2 === 0) {
+               ctx.beginPath(); ctx.arc(-tileSize*0.1, -tileSize*0.3, 2, 0, Math.PI*2); ctx.fill();
+               ctx.beginPath(); ctx.arc(tileSize*0.15, -tileSize*0.15, 2, 0, Math.PI*2); ctx.fill();
+           }
+       }
+       else if (type === 'crystal') {
+           ctx.translate(0, Math.sin(time * 0.003) * 3); 
+           ctx.fillStyle = '#c084fc'; 
+           ctx.beginPath(); ctx.moveTo(0, -tileSize*0.4); ctx.lineTo(-tileSize*0.15, 0); ctx.lineTo(0, tileSize*0.1); ctx.lineTo(tileSize*0.15, 0); ctx.fill();
+           ctx.fillStyle = '#e879f9'; 
+           ctx.beginPath(); ctx.moveTo(0, -tileSize*0.4); ctx.lineTo(0, tileSize*0.1); ctx.lineTo(tileSize*0.15, 0); ctx.fill();
+           
+           ctx.globalAlpha = 0.3 + Math.sin(time * 0.005) * 0.1;
+           ctx.fillStyle = '#f0abfc';
+           ctx.beginPath(); ctx.ellipse(0, tileSize*0.1, tileSize*0.2, tileSize*0.08, 0, 0, Math.PI*2); ctx.fill();
+           ctx.globalAlpha = 1.0;
+       }
+       else if (type === 'castle') {
+           ctx.fillStyle = '#fde047'; 
+           ctx.fillRect(-tileSize*0.3, -tileSize*0.1, tileSize*0.6, tileSize*0.3); 
+           ctx.fillRect(-tileSize*0.25, -tileSize*0.3, tileSize*0.15, tileSize*0.2); 
+           ctx.fillRect(tileSize*0.1, -tileSize*0.3, tileSize*0.15, tileSize*0.2); 
+           
+           ctx.fillStyle = '#eab308'; 
+           ctx.beginPath(); ctx.moveTo(-tileSize*0.25, -tileSize*0.3); ctx.lineTo(-tileSize*0.175, -tileSize*0.4); ctx.lineTo(-tileSize*0.1, -tileSize*0.3); ctx.fill();
+           ctx.beginPath(); ctx.moveTo(tileSize*0.1, -tileSize*0.3); ctx.lineTo(tileSize*0.175, -tileSize*0.4); ctx.lineTo(tileSize*0.25, -tileSize*0.3); ctx.fill();
+           
+           ctx.fillStyle = '#a16207'; 
+           ctx.beginPath(); ctx.arc(0, tileSize*0.2, tileSize*0.1, Math.PI, Math.PI*2); ctx.fill();
+       }
+       else if (type === 'snowman') {
+           ctx.fillStyle = '#ffffff';
+           ctx.beginPath(); ctx.arc(0, tileSize*0.1, tileSize*0.2, 0, Math.PI*2); ctx.fill(); 
+           ctx.beginPath(); ctx.arc(0, -tileSize*0.1, tileSize*0.15, 0, Math.PI*2); ctx.fill(); 
+           
+           ctx.fillStyle = '#0f172a'; 
+           ctx.beginPath(); ctx.arc(-4, -tileSize*0.15, 2, 0, Math.PI*2); ctx.fill();
+           ctx.beginPath(); ctx.arc(4, -tileSize*0.15, 2, 0, Math.PI*2); ctx.fill();
+           
+           ctx.fillStyle = '#f97316'; 
+           ctx.beginPath(); ctx.moveTo(0, -tileSize*0.1); ctx.lineTo(10, -tileSize*0.08); ctx.lineTo(0, -tileSize*0.06); ctx.fill();
+       }
+       
+       ctx.restore();
+    }
+
+    function gameLoop(timestamp) {
+      ctx.clearRect(0, 0, canvasW, canvasH);
+      
+      // พื้นน้ำ
+      ctx.fillStyle = '#7dd3fc';
+      ctx.fillRect(0, 0, canvasW, canvasH);
+      ctx.fillStyle = '#38bdf8';
+      for(let i=0; i<5; i++){
+          ctx.beginPath();
+          ctx.arc( (timestamp*0.05 + i*100) % (canvasW+100) - 50, canvasH*0.2 + (i*50) + Math.sin(timestamp*0.002 + i)*10, 30, 0, Math.PI);
+          ctx.fill();
+      }
+
+      drawGrid();
+
+      // วาดของที่ตั้งอยู่บนกริด
+      for (let x = 0; x < COLS; x++) {
+        for (let y = 0; y < ROWS; y++) {
+          if (islandGrid[x][y]) {
+             const cx = offsetX + (x * tileSize) + (tileSize/2);
+             const cy = offsetY + (y * tileSize) + (tileSize/2);
+             drawItem(islandGrid[x][y], cx, cy, timestamp);
+          }
+        }
+      }
+
+      // วาดของที่กำลังถูกลาก (อยู่ติดนิ้ว)
+      if (isDragging && draggedItem) {
+          drawItem(draggedItem, pointerX, pointerY, timestamp);
+      }
+
+      // เอฟเฟกต์วิบวับ
+      for(let i = particles.length-1; i>=0; i--){
+          let p = particles[i];
+          p.x += p.vx; p.y += p.vy; p.life -= 0.05;
+          ctx.globalAlpha = Math.max(0, p.life);
+          ctx.fillStyle = p.color;
+          ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill();
+          ctx.globalAlpha = 1.0;
+          if(p.life <= 0) particles.splice(i, 1);
+      }
+
+      animFrameId = requestAnimationFrame(gameLoop);
+    }
+
+    function initGameEngine() {
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+      document.getElementById('gameLoading').classList.add('opacity-0', 'pointer-events-none');
+      animFrameId = requestAnimationFrame(gameLoop);
+    }
+
+    async function saveGameToCloud() {
+      const btn = document.querySelector('button[onclick="saveGameToCloud()"]');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...';
+      
+      const gameStateJSON = JSON.stringify(islandGrid);
+      
+      try {
+        let res = await callBackend('saveGameState', { studentId: studentInfo.id, gameState: gameStateJSON });
+        if (res.status === 'success') {
+           Swal.fire({toast: true, position: 'top-end', icon: 'success', title: 'บันทึกเกาะสำเร็จ!', showConfirmButton: false, timer: 1500});
+        }
+      } catch(e) {
+         Swal.fire('ข้อผิดพลาด', 'ไม่สามารถบันทึกเกาะได้', 'error');
+      } finally {
+         btn.innerHTML = originalText;
+      }
+    }
+
+
+    // =====================================================
+    //  RECYCLE HERO GAME ENGINE  (all vars/funcs prefixed rg_)
+    // =====================================================
+
+    // Character costs (index matches CHARS array)
+    const RG_CHAR_COSTS = [0, 50, 80, 150]; // free, 50, 80, 150 pts
+
+    // Recycle game save state (populated from backend on login)
+    let rgState = {
+      unlockedChars: [0],  // indices of chars already bought
+      selectedChar: 0,      // index of currently selected
+      clearedStage: 0,      // highest stage cleared (0 = none, start from 0)
+    };
+
+    // ---- pixel-art char definitions ----
+    const RG_CHARS = [
+        {
+            name: 'นักผจญภัย', key: 'adventurer', cost: 0,
+            draw(ctx, x, y, frame) {
+                const t = frame & 1;
+                rg_setFill(ctx,'#e8b96a'); ctx.fillRect(x+6,y+2,12,10);
+                rg_setFill(ctx,'#4a2800'); ctx.fillRect(x+4,y+0,16,4);
+                rg_setFill(ctx,'#3a1800'); ctx.fillRect(x+6,y-4,12,4);
+                rg_setFill(ctx,'#1a6e2e'); ctx.fillRect(x+4,y+12,16,14);
+                rg_setFill(ctx,'#2244aa'); ctx.fillRect(x+4,y+26,8,10); ctx.fillRect(x+12,y+26,8,10);
+                rg_setFill(ctx,'#b8860b'); ctx.fillRect(x+3,y+36,9,4); ctx.fillRect(x+12,y+36,9,4);
+                rg_setFill(ctx,'#1a6e2e'); ctx.fillRect(x+0,y+12,5,10); ctx.fillRect(x+19,y+12,5,10);
+                if(t){ ctx.fillRect(x+4,y+36,8,4); ctx.fillRect(x+12,y+32,8,4); }
+                rg_setFill(ctx,'#000'); ctx.fillRect(x+8,y+5,2,2); ctx.fillRect(x+14,y+5,2,2);
+            }
+        },
+        {
+            name: 'นักวิทยาศาสตร์', key: 'scientist', cost: 50,
+            draw(ctx, x, y, frame) {
+                const t = frame & 1;
+                rg_setFill(ctx,'#f0d0a0'); ctx.fillRect(x+6,y+2,12,10);
+                rg_setFill(ctx,'#ffffff'); ctx.fillRect(x+4,y+12,16,14);
+                rg_setFill(ctx,'#ddddff'); ctx.fillRect(x+2,y+12,4,12); ctx.fillRect(x+18,y+12,4,12);
+                rg_setFill(ctx,'#333'); ctx.fillRect(x+4,y+26,8,10); ctx.fillRect(x+12,y+26,8,10);
+                rg_setFill(ctx,'#555'); ctx.fillRect(x+3,y+36,9,4); ctx.fillRect(x+12,y+36,9,4);
+                rg_setFill(ctx,'#88ccff'); ctx.fillRect(x+7,y+5,4,3); ctx.fillRect(x+13,y+5,4,3);
+                rg_setFill(ctx,'#333'); ctx.fillRect(x+11,y+6,2,1);
+                if(t){ ctx.fillRect(x+4,y+36,8,4); ctx.fillRect(x+12,y+32,8,4); }
+                rg_setFill(ctx,'#fff'); ctx.fillRect(x+5,y+1,14,3);
+            }
+        },
+        {
+            name: 'นักกีฬา', key: 'athlete', cost: 80,
+            draw(ctx, x, y, frame) {
+                const t = frame & 1;
+                rg_setFill(ctx,'#c8956a'); ctx.fillRect(x+6,y+2,12,10);
+                rg_setFill(ctx,'#cc2200'); ctx.fillRect(x+5,y-2,14,4);
+                rg_setFill(ctx,'#ee3300'); ctx.fillRect(x+4,y+12,16,14);
+                rg_setFill(ctx,'#1155dd'); ctx.fillRect(x+4,y+26,8,10); ctx.fillRect(x+12,y+26,8,10);
+                rg_setFill(ctx,'#eee'); ctx.fillRect(x+3,y+36,9,4); ctx.fillRect(x+12,y+36,9,4);
+                rg_setFill(ctx,'#ee3300'); ctx.fillRect(x+0,y+12,5,10); ctx.fillRect(x+19,y+12,5,10);
+                if(t){ ctx.fillRect(x+4,y+36,8,4); ctx.fillRect(x+12,y+32,8,4); }
+                rg_setFill(ctx,'#000'); ctx.fillRect(x+8,y+5,2,2); ctx.fillRect(x+14,y+5,2,2);
+            }
+        },
+        {
+            name: 'โรบอท', key: 'robot', cost: 150,
+            draw(ctx, x, y, frame) {
+                const t = frame & 1;
+                rg_setFill(ctx,'#888899'); ctx.fillRect(x+5,y+0,14,12);
+                rg_setFill(ctx,'#aabbcc'); ctx.fillRect(x+7,y+2,10,6);
+                rg_setFill(ctx,'#00eeff'); ctx.fillRect(x+8,y+3,3,4); ctx.fillRect(x+13,y+3,3,4);
+                rg_setFill(ctx,'#666677'); ctx.fillRect(x+4,y+12,16,16);
+                rg_setFill(ctx,'#555566'); ctx.fillRect(x+1,y+12,4,12); ctx.fillRect(x+19,y+12,4,12);
+                rg_setFill(ctx,'#444455'); ctx.fillRect(x+4,y+28,7,10); ctx.fillRect(x+13,y+28,7,10);
+                rg_setFill(ctx,'#333344'); ctx.fillRect(x+3,y+38,9,3); ctx.fillRect(x+12,y+38,9,3);
+                if(t){ rg_setFill(ctx,'#00eeff'); ctx.fillRect(x+9,y+16,6,2); }
+            }
+        }
+    ];
+    function rg_setFill(ctx, c){ ctx.fillStyle = c; }
+
+    // ---- Stage configs ----
+    const RG_STAGES = [
+        { stage:1,  goal:15,  duration:60,  spawnRate:2000, speedMin:1.2, speedMax:2.0,  maxTrash:2, burstCount:1, lanes:3, label:'ฝึกหัด',   bgTheme:'night'   },
+        { stage:2,  goal:28,  duration:65,  spawnRate:1800, speedMin:1.5, speedMax:2.5,  maxTrash:2, burstCount:1, lanes:3, label:'เริ่มต้น', bgTheme:'sunset'  },
+        { stage:3,  goal:45,  duration:70,  spawnRate:1600, speedMin:1.8, speedMax:3.0,  maxTrash:3, burstCount:2, lanes:4, label:'พอดี',     bgTheme:'dawn'    },
+        { stage:4,  goal:65,  duration:70,  spawnRate:1400, speedMin:2.0, speedMax:3.5,  maxTrash:3, burstCount:2, lanes:4, label:'สนุกขึ้น', bgTheme:'storm'   },
+        { stage:5,  goal:90,  duration:75,  spawnRate:1200, speedMin:2.2, speedMax:4.0,  maxTrash:4, burstCount:2, lanes:5, label:'ท้าทาย',  bgTheme:'jungle'  },
+        { stage:6,  goal:120, duration:75,  spawnRate:1000, speedMin:2.5, speedMax:4.5,  maxTrash:4, burstCount:3, lanes:5, label:'เร็วขึ้น!', bgTheme:'desert' },
+        { stage:7,  goal:160, duration:80,  spawnRate:850,  speedMin:2.8, speedMax:5.0,  maxTrash:5, burstCount:3, lanes:6, label:'เอาจริง',  bgTheme:'snow'    },
+        { stage:8,  goal:210, duration:80,  spawnRate:700,  speedMin:3.2, speedMax:5.8,  maxTrash:5, burstCount:4, lanes:6, label:'หนักมาก', bgTheme:'neon'    },
+        { stage:9,  goal:265, duration:85,  spawnRate:550,  speedMin:3.5, speedMax:6.5,  maxTrash:6, burstCount:4, lanes:7, label:'โคตรยาก', bgTheme:'space'   },
+        { stage:10, goal:330, duration:90,  spawnRate:400,  speedMin:4.0, speedMax:7.5,  maxTrash:7, burstCount:5, lanes:7, label:'ระดับเทพ', bgTheme:'lava'    },
+    ];
+    const RG_TRASH_TYPES = [
+        { id:'bottle', pts:2, color:'#22ccff', darkColor:'#0077aa', w:12, h:30 },
+        { id:'glass',  pts:3, color:'#99ff99', darkColor:'#228822', w:10, h:28 },
+        { id:'paper',  pts:1, color:'#ffe680', darkColor:'#b8a000', w:18, h:14 },
+        { id:'can',    pts:2, color:'#ff9944', darkColor:'#aa4400', w:13, h:22 },
+    ];
+    const RG_BG_THEMES = {
+        night:  { sky:['#0d0d2b','#1a2a1a'], bldColor:'#0d1a0d', winColor:'#1a3a1a', groundTop:'#1a1a1a', groundLine:'#333', stars:true,  rain:false, snow:false, aurora:false, sandstorm:false, lava:false, neonGlow:false },
+        sunset: { sky:['#1a0a2b','#8b2200'], bldColor:'#1a0800', winColor:'#3a1500', groundTop:'#1a0a00', groundLine:'#552200', stars:false, rain:false, snow:false, aurora:false, sandstorm:false, lava:false, neonGlow:false },
+        dawn:   { sky:['#1a1040','#ff8c42'], bldColor:'#0a0a20', winColor:'#2244aa', groundTop:'#1a1a2a', groundLine:'#4466cc', stars:true,  rain:false, snow:false, aurora:false, sandstorm:false, lava:false, neonGlow:false },
+        storm:  { sky:['#0a0a14','#202030'], bldColor:'#0a0a10', winColor:'#223355', groundTop:'#111118', groundLine:'#224466', stars:false, rain:true,  snow:false, aurora:false, sandstorm:false, lava:false, neonGlow:false },
+        jungle: { sky:['#041a04','#0a3a0a'], bldColor:'#021002', winColor:'#124412', groundTop:'#081408', groundLine:'#1a6e1a', stars:false, rain:true,  snow:false, aurora:false, sandstorm:false, lava:false, neonGlow:false },
+        desert: { sky:['#1a0800','#ff6b00'], bldColor:'#2a1400', winColor:'#552200', groundTop:'#2a1a00', groundLine:'#8b4500', stars:false, rain:false, snow:false, aurora:false, sandstorm:true,  lava:false, neonGlow:false },
+        snow:   { sky:['#1a1a2a','#2a3a5a'], bldColor:'#0a0a18', winColor:'#3355aa', groundTop:'#ccddee', groundLine:'#aabbcc', stars:true,  rain:false, snow:true,  aurora:true,  sandstorm:false, lava:false, neonGlow:false },
+        neon:   { sky:['#050010','#0a0020'], bldColor:'#080020', winColor:'#ff00ff', groundTop:'#100020', groundLine:'#ff00ff', stars:false, rain:false, snow:false, aurora:false, sandstorm:false, lava:false, neonGlow:true  },
+        space:  { sky:['#000005','#000010'], bldColor:'#000008', winColor:'#004488', groundTop:'#080808', groundLine:'#2244aa', stars:true,  rain:false, snow:false, aurora:true,  sandstorm:false, lava:false, neonGlow:false },
+        lava:   { sky:['#1a0000','#3a0000'], bldColor:'#200000', winColor:'#660000', groundTop:'#1a0000', groundLine:'#ff4400', stars:false, rain:false, snow:false, aurora:false, sandstorm:false, lava:true,  neonGlow:false },
+    };
+
+    // ---- Game state ----
+    let rg_gs = {
+        screen: 'shop',
+        stage: 0,
+        score: 0,
+        totalScore: 0,
+        timeLeft: 60,
+        timerInterval: null,
+        selectedChar: 0,
+        animFrame: 0,
+    };
+    const rg_player = { lane:2, targetX:0, x:0, y:0, width:24, height:42, walkFrame:0 };
+    let rg_trashItems = [], rg_lastSpawnTime = 0;
+    let rg_particles = [], rg_laneFlashes = [], rg_screenShake = 0;
+    let rg_weatherParts = [];
+    let rg_animRafId = null;
+
+    // canvas refs (initialised lazily when tab opened)
+    let rg_canvas = null, rg_ctx = null;
+    let rg_canvasW, rg_canvasH, rg_laneW, rg_groundY;
+
+    // ---- Character shop rendering ----
+    function rg_renderShop() {
+        const grid = document.getElementById('rg-char-shop-grid');
+        if(!grid) return;
+        grid.innerHTML = '';
+        const avail = currentPoints;
+        const el = document.getElementById('rg-avail-pts');
+        if(el) el.textContent = avail;
+
+        RG_CHARS.forEach((ch, i) => {
+            const unlocked = rgState.unlockedChars.includes(i);
+            const selected = rgState.selectedChar === i;
+            const canBuy   = !unlocked && avail >= ch.cost;
+
+            const div = document.createElement('div');
+            div.className = 'rg-char-item' + (selected ? ' selected' : '') + ((!unlocked && !canBuy) ? ' locked' : '');
+
+            // Mini pixel preview
+            const cvs = document.createElement('canvas');
+            cvs.width = 24; cvs.height = 42;
+            cvs.style.cssText = 'width:48px;height:84px;image-rendering:pixelated;display:block;margin:0 auto 6px';
+            const cctx = cvs.getContext('2d');
+            cctx.imageSmoothingEnabled = false;
+            ch.draw(cctx, 0, 0, 0);
+
+            const nameEl = document.createElement('div');
+            nameEl.style.cssText = 'font-size:0.45rem;color:#ffe600;margin-bottom:4px;font-family:"Press Start 2P",cursive';
+            nameEl.textContent = ch.name;
+
+            const actionEl = document.createElement('div');
+            actionEl.style.cssText = 'font-size:0.4rem;font-family:"Press Start 2P",cursive';
+
+            if(unlocked) {
+                actionEl.style.color = '#7fff00';
+                actionEl.textContent = selected ? '✅ เลือกอยู่' : '✓ ปลดล็อก';
+                if(!selected) div.onclick = () => {
+                    rgState.selectedChar = i;
+                    rg_gs.selectedChar = i;
+                    rg_renderShop();
+                };
+            } else if(canBuy) {
+                actionEl.style.color = '#ffe600';
+                actionEl.textContent = `🔓 ซื้อ ${ch.cost} ⭐`;
+                div.onclick = () => rg_buyChar(i, ch.cost);
+            } else {
+                actionEl.style.color = '#888';
+                actionEl.textContent = ch.cost === 0 ? 'ฟรี' : `🔒 ${ch.cost} ⭐`;
+            }
+
+            div.appendChild(cvs);
+            div.appendChild(nameEl);
+            div.appendChild(actionEl);
+            grid.appendChild(div);
+        });
+    }
+
+    function rg_buyChar(idx, cost) {
+        if(currentPoints < cost) {
+            Swal.fire({toast:true, position:'top-end', icon:'error', title:'แต้มไม่พอ!', showConfirmButton:false, timer:1500});
+            return;
+        }
+        Swal.fire({
+            title: `ซื้อตัวละคร "${RG_CHARS[idx].name}"?`,
+            text: `ใช้ ${cost} แต้ม`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'ซื้อเลย',
+            cancelButtonText: 'ยกเลิก',
+            confirmButtonColor: '#ffe600',
+        }).then(r => {
+            if(r.isConfirmed) {
+                // deduct: record as spent in island grid equivalent
+                // We add to rgState and save — spentPoints recalculates via calculateCurrentPoints()
+                rgState.unlockedChars.push(idx);
+                rgState.selectedChar = idx;
+                rg_gs.selectedChar = idx;
+                calculateCurrentPoints(); // will recalc spentPoints including this
+                rg_renderShop();
+                rg_saveRecycleProgress();
+                Swal.fire({toast:true, position:'top-end', icon:'success', title:`ซื้อ ${RG_CHARS[idx].name} แล้ว!`, showConfirmButton:false, timer:1800});
+            }
+        });
+    }
+
+    // ---- Start game (from shop) ----
+    function rg_startGame() {
+        // init canvas if needed
+        if(!rg_canvas) {
+            rg_canvas = document.getElementById('rg-canvas');
+            rg_ctx = rg_canvas.getContext('2d');
+            rg_ctx.imageSmoothingEnabled = false;
+        }
+        rg_gs.selectedChar = rgState.selectedChar;
+        rg_gs.stage = Math.max(0, rgState.clearedStage); // start from next uncompleted stage
+        rg_gs.totalScore = 0;
+        rg_gs.score = 0;
+
+        // Show game outer
+        document.getElementById('rg-char-shop-panel').classList.add('hidden');
+        document.getElementById('rg-outer').classList.remove('hidden');
+
+        rg_resizeCanvas();
+        if(!rg_animRafId) rg_animRafId = requestAnimationFrame(rg_loop);
+
+        // show d-pad on touch
+        if(navigator.maxTouchPoints > 0) document.getElementById('rg-mobile-dpad').style.display = 'flex';
+
+        rg_showStageIntro();
+    }
+
+    function rg_backToShop() {
+        rg_stopTimer();
+        rg_gs.screen = 'shop';
+        rg_trashItems = [];
+        // hide game, show shop
+        document.getElementById('rg-outer').classList.add('hidden');
+        document.getElementById('rg-char-shop-panel').classList.remove('hidden');
+        rg_renderShop();
+    }
+
+    // ---- Canvas sizing ----
+    function rg_resizeCanvas() {
+        if(!rg_canvas) return;
+        const outer = document.getElementById('rg-outer');
+        const w = outer.clientWidth;
+        const h = outer.clientHeight;
+        rg_canvas.style.width  = w + 'px';
+        rg_canvas.style.height = h + 'px';
+        rg_canvas.width  = Math.round(w * 0.5);
+        rg_canvas.height = Math.round(h * 0.5);
+        rg_ctx.imageSmoothingEnabled = false;
+        rg_canvasW = rg_canvas.width;
+        rg_canvasH = rg_canvas.height;
+        rg_laneW   = Math.floor(rg_canvasW / rg_currentLanes());
+        rg_groundY = rg_canvasH - 50;
+        rg_player.y = rg_groundY - rg_player.height;
+        rg_player.x = rg_laneX(rg_player.lane);
+        rg_player.targetX = rg_player.x;
+    }
+    window.addEventListener('resize', () => { if(rg_canvas) rg_resizeCanvas(); });
+
+    function rg_currentLanes() {
+        return (rg_gs.screen === 'playing' || rg_gs.screen === 'checking')
+            ? RG_STAGES[rg_gs.stage].lanes : 5;
+    }
+    function rg_laneX(lane){ return Math.floor(rg_laneW * lane + rg_laneW/2 - rg_player.width/2); }
+    function rg_laneCenterX(lane){ return Math.floor(rg_laneW * lane + rg_laneW/2); }
+
+    // ---- Screen switcher ----
+    function rg_showScreen(id) {
+        ['rg-stage-intro-screen','rg-stage-clear-screen','rg-stage-fail-screen','rg-game-complete-screen']
+            .forEach(sid => {
+                const el = document.getElementById(sid);
+                if(!el) return;
+                if(sid === id) el.classList.remove('hidden');
+                else el.classList.add('hidden');
+            });
+        const hud  = document.getElementById('rg-hud');
+        const goal = document.getElementById('rg-stage-goal');
+        if(id === null) { hud.classList.remove('hidden'); goal.classList.remove('hidden'); }
+        else { hud.classList.add('hidden'); goal.classList.add('hidden'); }
+    }
+
+    // ---- Game flow ----
+    function rg_showStageIntro() {
+        rg_stopTimer();
+        const cfg = RG_STAGES[rg_gs.stage];
+        const el1 = document.getElementById('rg-stageIntroTitle');
+        const el2 = document.getElementById('rg-stageIntroInfo');
+        if(el1) el1.innerHTML = `STAGE ${cfg.stage} / 10<br><span style="font-size:0.5em;color:#aaa">${cfg.label}</span>`;
+        if(el2) el2.innerHTML =
+            `เป้าหมาย: <span style="color:#ffe600">${cfg.goal} คะแนน</span> ใน <span style="color:#ff9944">${cfg.duration} วินาที</span><br>` +
+            `เลน: <span style="color:#7fff00">${cfg.lanes}</span> &nbsp;| ขยะพร้อมกัน: <span style="color:#22ccff">${cfg.burstCount}</span>`;
+        rg_showScreen('rg-stage-intro-screen');
+        rg_gs.screen = 'stageIntro';
+    }
+
+    function rg_beginStage() {
+        const cfg = RG_STAGES[rg_gs.stage];
+        rg_gs.score = 0;
+        rg_gs.timeLeft = cfg.duration;
+        rg_trashItems = []; rg_particles = []; rg_laneFlashes = []; rg_screenShake = 0;
+        rg_lastSpawnTime = 0;
+        rg_laneW = Math.floor(rg_canvasW / cfg.lanes);
+        const mid = Math.floor(cfg.lanes / 2);
+        rg_player.lane = mid;
+        rg_player.x = rg_laneX(mid);
+        rg_player.targetX = rg_player.x;
+        rg_updateHUD();
+        rg_showScreen(null);
+        rg_gs.screen = 'playing';
+        rg_showStageBanner('STAGE ' + cfg.stage);
+        rg_startTimer();
+        rg_initWeather();
+    }
+
+    function rg_showStageBanner(text) {
+        const b = document.getElementById('rg-stage-banner');
+        if(!b) return;
+        b.textContent = text;
+        b.classList.remove('show'); void b.offsetWidth;
+        b.classList.add('show');
+        setTimeout(() => b.classList.remove('show'), 2100);
+    }
+
+    function rg_startTimer() {
+        rg_stopTimer();
+        rg_gs.timerInterval = setInterval(() => {
+            rg_gs.timeLeft--;
+            rg_updateHUD();
+            if(rg_gs.timeLeft <= 0) { rg_stopTimer(); rg_endStage(); }
+        }, 1000);
+    }
+    function rg_stopTimer() {
+        if(rg_gs.timerInterval){ clearInterval(rg_gs.timerInterval); rg_gs.timerInterval = null; }
+    }
+
+    function rg_endStage() {
+        rg_gs.screen = 'checking';
+        rg_stopTimer();
+        rg_trashItems = [];
+        const cfg = RG_STAGES[rg_gs.stage];
+        rg_gs.totalScore += rg_gs.score;
+
+        setTimeout(() => {
+            if(rg_gs.score >= cfg.goal) {
+                // Mark stage as cleared
+                if(rg_gs.stage + 1 > rgState.clearedStage) {
+                    rgState.clearedStage = rg_gs.stage + 1;
+                    rg_saveRecycleProgress();
+                }
+                if(rg_gs.stage >= RG_STAGES.length - 1) {
+                    const el = document.getElementById('rg-completeInfo');
+                    if(el) el.innerHTML = `คะแนนรวม: <span style="color:#ffe600">${rg_gs.totalScore}</span><br>🌍 คุณคือ RecycleHero!`;
+                    rg_showScreen('rg-game-complete-screen');
+                    rg_gs.screen = 'gameComplete';
+                } else {
+                    const el = document.getElementById('rg-clearInfo');
+                    if(el) el.innerHTML = `คะแนน: <span style="color:#ffe600">${rg_gs.score}</span> / ${cfg.goal}<br>รวม: <span style="color:#7fff00">${rg_gs.totalScore}</span>`;
+                    rg_showScreen('rg-stage-clear-screen');
+                    rg_gs.screen = 'stageClear';
+                }
+            } else {
+                const el = document.getElementById('rg-failInfo');
+                if(el) el.innerHTML = `ได้: <span style="color:#ff4444">${rg_gs.score}</span> / ${cfg.goal}<br>ขาดอีก <span style="color:#ff9944">${cfg.goal - rg_gs.score}</span>`;
+                rg_showScreen('rg-stage-fail-screen');
+                rg_gs.screen = 'stageFail';
+            }
+        }, 600);
+    }
+
+    function rg_goNextStage() { rg_gs.stage++; rg_gs.score=0; rg_showStageIntro(); }
+    function rg_retryStage()   { rg_gs.score=0; rg_showStageIntro(); }
+
+    // ---- HUD ----
+    function rg_updateHUD() {
+        const el = (id) => document.getElementById(id);
+        if(el('rg-hudScore')) el('rg-hudScore').textContent = rg_gs.score;
+        if(el('rg-hudStage')) el('rg-hudStage').textContent = (rg_gs.stage+1) + '/10';
+        if(el('rg-hudTimer')) {
+            const m = Math.floor(rg_gs.timeLeft/60), s = rg_gs.timeLeft%60;
+            el('rg-hudTimer').textContent = m+':'+(s<10?'0':'')+s;
+            el('rg-hudTimer').classList.toggle('urgent', rg_gs.timeLeft <= 10);
+        }
+        if(el('rg-goalScore'))    el('rg-goalScore').textContent = RG_STAGES[rg_gs.stage].goal;
+        if(el('rg-currentScore')) el('rg-currentScore').textContent = rg_gs.score;
+    }
+
+    // ---- Spawning ----
+    function rg_spawnTrash(now) {
+        const cfg = RG_STAGES[rg_gs.stage];
+        const active = rg_trashItems.filter(t=>t.active).length;
+        if(active >= cfg.maxTrash) return;
+        if(now - rg_lastSpawnTime < cfg.spawnRate) return;
+        rg_lastSpawnTime = now;
+        const burst = Math.min(cfg.burstCount, cfg.maxTrash - active);
+        const usedLanes = new Set();
+        for(let b=0; b<burst; b++) {
+            let lane, tries=0;
+            do { lane=Math.floor(Math.random()*cfg.lanes); tries++; }
+            while(usedLanes.has(lane) && tries<10);
+            usedLanes.add(lane);
+            const type  = RG_TRASH_TYPES[Math.floor(Math.random()*RG_TRASH_TYPES.length)];
+            const speed = cfg.speedMin + Math.random()*(cfg.speedMax-cfg.speedMin);
+            rg_trashItems.push({ active:true, lane, x:rg_laneCenterX(lane)-type.w/2, y:-type.h+(b*-12), vy:speed, type, rotation:0, rotSpeed:(Math.random()-0.5)*0.08, wobble:Math.random()*Math.PI*2 });
+        }
+    }
+
+    // ---- Collision ----
+    function rg_checkCollisions() {
+        const px=rg_player.x, py=rg_player.y, pw=rg_player.width+8;
+        for(let t of rg_trashItems) {
+            if(!t.active) continue;
+            const ty = t.y + t.type.h;
+            if(ty>=py-6 && ty<=py+rg_player.height+4 && t.x+t.type.w>=px-4 && t.x<=px+pw) rg_collectTrash(t);
+        }
+    }
+    function rg_collectTrash(t) {
+        t.active = false;
+        rg_gs.score += t.type.pts;
+        rg_gs.totalScore += t.type.pts;
+        rg_updateHUD();
+        for(let i=0;i<10;i++) rg_particles.push({ x:t.x+t.type.w/2, y:t.y+t.type.h/2, vx:(Math.random()-.5)*3, vy:-Math.random()*3-.5, life:1, color:t.type.color, size:Math.random()*3+1 });
+        rg_laneFlashes.push({ lane:t.lane, color:t.type.color, life:1 });
+        rg_screenShake = 3;
+        rg_addScorePopup(t.x+t.type.w/2, t.y, '+'+t.type.pts, t.type.color);
+        const cfg = RG_STAGES[rg_gs.stage];
+        if(rg_gs.screen==='playing' && rg_gs.score>=cfg.goal) {
+            rg_showStageBanner('🏅 GOAL REACHED!');
+            setTimeout(() => rg_endStage(), 800);
+        }
+    }
+    function rg_addScorePopup(cx, cy, text, color) {
+        if(!rg_canvas) return;
+        const rect = rg_canvas.getBoundingClientRect();
+        const sx = rect.width / rg_canvasW, sy = rect.height / rg_canvasH;
+        const p = document.createElement('div');
+        p.className = 'score-popup';
+        p.style.cssText = `position:fixed;font-size:0.65rem;font-family:'Press Start 2P',cursive;pointer-events:none;z-index:9999;animation:floatUp2 0.9s ease-out forwards;color:${color};text-shadow:2px 2px 0 #000;left:${rect.left+cx*sx-14}px;top:${rect.top+cy*sy-10}px`;
+        p.textContent = text;
+        if(!document.getElementById('rg-float-style')) {
+            const st = document.createElement('style');
+            st.id = 'rg-float-style';
+            st.textContent = '@keyframes floatUp2{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-60px);opacity:0}}';
+            document.head.appendChild(st);
+        }
+        document.body.appendChild(p);
+        setTimeout(() => p.remove(), 900);
+    }
+
+    // ---- Weather ----
+    function rg_initWeather() {
+        rg_weatherParts = [];
+        const th = RG_BG_THEMES[RG_STAGES[rg_gs.stage].bgTheme] || RG_BG_THEMES.night;
+        const count = (th.rain||th.sandstorm) ? 60 : th.snow ? 40 : 0;
+        for(let i=0;i<count;i++) rg_weatherParts.push({ x:Math.random()*rg_canvasW, y:Math.random()*rg_canvasH, vy:th.snow?(0.3+Math.random()*0.6):(3+Math.random()*4), vx:th.sandstorm?(1+Math.random()*2):(th.rain?-0.5:0), size:th.snow?(1+Math.random()*2):1 });
+    }
+
+    // ---- Drawing ----
+    function rg_drawBackground() {
+        if(!rg_ctx) return;
+        const ctx = rg_ctx;
+        const stageCfg = (rg_gs.screen==='playing'||rg_gs.screen==='checking') ? RG_STAGES[rg_gs.stage] : {bgTheme:'night', lanes:5};
+        const th = RG_BG_THEMES[stageCfg.bgTheme] || RG_BG_THEMES.night;
+        const lanes = stageCfg.lanes||5;
+        const sky = ctx.createLinearGradient(0,0,0,rg_groundY);
+        sky.addColorStop(0,th.sky[0]); sky.addColorStop(1,th.sky[1]);
+        ctx.fillStyle=sky; ctx.fillRect(0,0,rg_canvasW,rg_groundY);
+        if(th.aurora) { for(let a=0;a<3;a++){ const ax=(rg_canvasW*0.2*a+rg_gs.animFrame*0.3)%rg_canvasW; const ag=ctx.createLinearGradient(ax,0,ax+60,rg_groundY*0.5); const hue=(rg_gs.animFrame*0.5+a*120)%360; ag.addColorStop(0,`hsla(${hue},100%,60%,0)`); ag.addColorStop(0.5,`hsla(${hue},100%,60%,0.12)`); ag.addColorStop(1,`hsla(${hue},100%,60%,0)`); ctx.fillStyle=ag; ctx.fillRect(0,0,rg_canvasW,rg_groundY*0.5); } }
+        if(th.stars) { for(let i=0;i<35;i++){ const sx=((i*73+17)*1331)%rg_canvasW; const sy=((i*37+11)*791)%(rg_groundY*0.55); const blink=((rg_gs.animFrame+i*7)&31)<16?1:0.3; ctx.globalAlpha=blink*0.7; ctx.fillStyle='#fff'; ctx.fillRect(Math.floor(sx),Math.floor(sy),1,1); } ctx.globalAlpha=1; }
+        if(th.neonGlow) { for(let y=0;y<rg_groundY;y+=6){ctx.globalAlpha=0.04;ctx.fillStyle='#ff00ff';ctx.fillRect(0,y,rg_canvasW,2);} for(let n=0;n<4;n++){const nx=rg_canvasW*0.15+n*rg_canvasW*0.22;const hue=(n*90+rg_gs.animFrame)%360;ctx.globalAlpha=0.15+0.1*Math.sin(rg_gs.animFrame*0.05+n);ctx.fillStyle=`hsl(${hue},100%,60%)`;ctx.fillRect(Math.floor(nx),rg_groundY-50,20,4);} ctx.globalAlpha=1; }
+        if(th.lava) { const lv=ctx.createLinearGradient(0,rg_groundY*0.5,0,rg_groundY); lv.addColorStop(0,'rgba(0,0,0,0)'); const pulse=0.12+0.06*Math.sin(rg_gs.animFrame*0.04); lv.addColorStop(1,`rgba(255,60,0,${pulse})`); ctx.fillStyle=lv; ctx.fillRect(0,rg_groundY*0.5,rg_canvasW,rg_groundY*0.5); ctx.globalAlpha=1; }
+        if(stageCfg.bgTheme==='sunset'||stageCfg.bgTheme==='desert'){ctx.fillStyle='#ff8800';ctx.globalAlpha=0.7;ctx.beginPath();ctx.arc(rg_canvasW*0.75,rg_groundY*0.3,14,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
+        else if(th.stars){ctx.fillStyle='#fffde0';ctx.globalAlpha=0.5;ctx.beginPath();ctx.arc(rg_canvasW*0.8,rg_groundY*0.12,7,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
+        // buildings
+        [[0,60,30,40],[32,50,20,50],[55,45,35,55],[95,55,25,45],[125,40,20,60],[150,60,30,40],[185,50,25,50],[215,45,20,55],[240,55,30,45],[275,40,25,60],[305,60,20,40],[330,48,30,52],[365,55,18,45],[388,42,22,58],[415,60,25,40],[445,50,35,50]].forEach(([bx,bh,bw,bbase])=>{ctx.fillStyle=th.bldColor;ctx.fillRect(bx,rg_groundY-bbase,bw,bbase);ctx.fillStyle=th.winColor;for(let wy=rg_groundY-bbase+4;wy<rg_groundY-8;wy+=8)for(let wx=bx+3;wx<bx+bw-6;wx+=7){const lit=th.neonGlow?((wx+wy+rg_gs.animFrame)%17<5):((wx*3+wy*7)%11>4);if(lit)ctx.fillRect(wx,wy,4,4);}});
+        // weather
+        if(rg_weatherParts.length>0){ctx.globalAlpha=th.snow?0.8:0.45;ctx.fillStyle=th.sandstorm?'#cc8844':(th.snow?'#ddeeff':'#88aaff');rg_weatherParts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.y>rg_canvasH){p.y=-4;p.x=Math.random()*rg_canvasW;}if(p.x>rg_canvasW)p.x=0;if(th.rain)ctx.fillRect(Math.floor(p.x),Math.floor(p.y),1,4);else ctx.fillRect(Math.floor(p.x),Math.floor(p.y),Math.ceil(p.size),Math.ceil(p.size));});ctx.globalAlpha=1;}
+        ctx.fillStyle=th.groundTop; ctx.fillRect(0,rg_groundY,rg_canvasW,rg_canvasH-rg_groundY);
+        ctx.fillStyle=th.groundLine; ctx.fillRect(0,rg_groundY,rg_canvasW,2);
+        ctx.strokeStyle='#ffffff22';ctx.lineWidth=1;ctx.setLineDash([4,8]);
+        for(let i=1;i<lanes;i++){ctx.beginPath();ctx.moveTo(rg_laneW*i,rg_groundY-80);ctx.lineTo(rg_laneW*i,rg_groundY);ctx.stroke();}
+        ctx.setLineDash([]);
+    }
+
+    function rg_drawPlayer() {
+        if(!rg_ctx) return;
+        const ctx = rg_ctx;
+        const dx = rg_player.targetX - rg_player.x;
+        rg_player.x += dx * 0.25;
+        ctx.fillStyle='rgba(0,0,0,0.3)';
+        ctx.fillRect(rg_player.x+2, rg_groundY-4, rg_player.width, 6);
+        RG_CHARS[rg_gs.selectedChar].draw(ctx, Math.floor(rg_player.x), Math.floor(rg_player.y), rg_gs.animFrame>>3);
+    }
+
+    function rg_drawTrash() {
+        if(!rg_ctx) return;
+        const ctx = rg_ctx;
+        rg_trashItems.forEach(t => {
+            if(!t.active) return;
+            t.wobble += 0.05;
+            const wobX = Math.sin(t.wobble) * 0.5;
+            ctx.save();
+            ctx.translate(Math.floor(t.x+t.type.w/2+wobX), Math.floor(t.y+t.type.h/2));
+            ctx.rotate(t.rotation);
+            rg_drawTrashShape(ctx, t.type, -t.type.w/2, -t.type.h/2);
+            ctx.restore();
+            t.rotation += t.rotSpeed;
+        });
+    }
+    function rg_drawTrashShape(ctx, type, ox, oy) {
+        const w=type.w,h=type.h;
+        if(type.id==='bottle'){ctx.fillStyle=type.color;ctx.fillRect(ox+2,oy,w-4,h*0.7);ctx.fillStyle=type.darkColor;ctx.fillRect(ox+3,oy+1,w-6,h*0.7-2);ctx.fillStyle='#ffffff88';ctx.fillRect(ox+3,oy+2,2,h*0.3);ctx.fillStyle=type.color;ctx.fillRect(ox+w/2-2,oy-h*0.2,4,h*0.2);ctx.fillStyle='#ff5555';ctx.fillRect(ox+w/2-3,oy-h*0.3,6,h*0.12);ctx.fillStyle='#ffffff55';ctx.fillRect(ox+2,oy+h*0.3,w-4,h*0.2);}
+        else if(type.id==='glass'){ctx.fillStyle=type.color;ctx.fillRect(ox+1,oy,w-2,h*0.75);ctx.fillStyle=type.darkColor;ctx.fillRect(ox+2,oy+1,w-4,h*0.73);ctx.fillStyle='#ffffff55';ctx.fillRect(ox+2,oy+2,2,h*0.4);ctx.fillStyle=type.color;ctx.fillRect(ox+w/2-2,oy-h*0.25,4,h*0.27);ctx.fillStyle='#aaaaaa';ctx.fillRect(ox+w/2-3,oy-h*0.32,6,h*0.1);}
+        else if(type.id==='paper'){ctx.fillStyle=type.color;ctx.fillRect(ox,oy,w,h);ctx.fillStyle=type.darkColor;ctx.fillRect(ox+2,oy+2,w-4,2);ctx.fillRect(ox+2,oy+6,w-4,2);ctx.fillRect(ox+2,oy+10,w-6,2);ctx.fillStyle='#fff8';ctx.fillRect(ox+w-6,oy,6,6);ctx.fillStyle=type.darkColor;ctx.fillRect(ox+w-5,oy+1,4,4);}
+        else if(type.id==='can'){ctx.fillStyle=type.color;ctx.fillRect(ox+1,oy,w-2,h);ctx.fillStyle=type.darkColor;ctx.fillRect(ox+2,oy+2,w-4,h-4);ctx.fillStyle='#ffffff66';ctx.fillRect(ox+2,oy+3,2,h-6);ctx.fillStyle='#cccccc';ctx.fillRect(ox,oy,w,3);ctx.fillRect(ox,oy+h-3,w,3);ctx.fillStyle='#888';ctx.fillRect(ox+w/2-2,oy-2,4,3);ctx.fillStyle='#fff3';ctx.fillRect(ox+1,oy+h*0.35,w-2,h*0.3);}
+    }
+
+    function rg_drawParticles() {
+        if(!rg_ctx) return;
+        const ctx = rg_ctx;
+        rg_particles = rg_particles.filter(p=>p.life>0);
+        rg_particles.forEach(p=>{ctx.globalAlpha=p.life;ctx.fillStyle=p.color;ctx.fillRect(Math.floor(p.x),Math.floor(p.y),Math.ceil(p.size),Math.ceil(p.size));p.x+=p.vx;p.y+=p.vy;p.vy+=0.1;p.life-=0.04;});
+        ctx.globalAlpha=1;
+    }
+    function rg_drawLaneFlashes() {
+        if(!rg_ctx) return;
+        rg_laneFlashes = rg_laneFlashes.filter(f=>f.life>0);
+        rg_laneFlashes.forEach(f=>{rg_ctx.globalAlpha=f.life*0.25;rg_ctx.fillStyle=f.color;rg_ctx.fillRect(rg_laneW*f.lane,0,rg_laneW,rg_canvasH);f.life-=0.06;});
+        rg_ctx.globalAlpha=1;
+    }
+    function rg_drawMissed() {
+        rg_trashItems.forEach(t=>{if(t.active&&t.y>rg_groundY+4){rg_laneFlashes.push({lane:t.lane,color:'#ff2222',life:0.8});t.active=false;}});
+    }
+    function rg_drawHUDBar() {
+        if(!rg_ctx) return;
+        const ctx=rg_ctx, cfg=RG_STAGES[rg_gs.stage];
+        const ratio=Math.min(rg_gs.score/cfg.goal,1);
+        const barW=rg_canvasW-20, barH=5, bx=10, by=rg_canvasH-10;
+        ctx.fillStyle='#333'; ctx.fillRect(bx,by,barW,barH);
+        const grad=ctx.createLinearGradient(bx,0,bx+barW,0);
+        grad.addColorStop(0,'#7fff00'); grad.addColorStop(1,'#00ff88');
+        ctx.fillStyle=grad; ctx.fillRect(bx,by,Math.floor(barW*ratio),barH);
+        ctx.strokeStyle='#555'; ctx.lineWidth=1; ctx.strokeRect(bx,by,barW,barH);
+        ctx.fillStyle='#ffe600'; ctx.fillRect(bx+Math.floor(barW)-1,by-2,2,barH+4);
+    }
+
+    // ---- Input ----
+    window.addEventListener('keydown', e => {
+        if(rg_gs.screen !== 'playing') return;
+        if(e.code==='ArrowLeft'||e.code==='KeyA') rg_movePlayer(-1);
+        if(e.code==='ArrowRight'||e.code==='KeyD') rg_movePlayer(1);
+    });
+    function rg_movePlayer(dir) {
+        const lanes = rg_gs.screen==='playing' ? RG_STAGES[rg_gs.stage].lanes : 5;
+        const nl = Math.max(0, Math.min(lanes-1, rg_player.lane+dir));
+        if(nl!==rg_player.lane){ rg_player.lane=nl; rg_player.targetX=rg_laneX(nl); }
+    }
+    let rg_dpadInterval=null;
+    function rg_e_move(dir,e){ e.preventDefault(); if(rg_gs.screen!=='playing') return; rg_movePlayer(dir); clearInterval(rg_dpadInterval); rg_dpadInterval=setInterval(()=>{ if(rg_gs.screen==='playing')rg_movePlayer(dir); else{clearInterval(rg_dpadInterval);rg_dpadInterval=null;} },160); }
+    function rg_e_stopMove(e){ e.preventDefault(); clearInterval(rg_dpadInterval); rg_dpadInterval=null; }
+
+    // Swipe & click
+    let rg_touchStartX=0;
+    document.getElementById('rg-canvas') && document.getElementById('rg-canvas').addEventListener('touchstart', e=>{rg_touchStartX=e.touches[0].clientX;e.preventDefault();},{passive:false});
+    document.getElementById('rg-canvas') && document.getElementById('rg-canvas').addEventListener('touchend', e=>{if(rg_gs.screen!=='playing')return;const dx=e.changedTouches[0].clientX-rg_touchStartX;if(Math.abs(dx)>20)rg_movePlayer(dx>0?1:-1);e.preventDefault();},{passive:false});
+    document.getElementById('rg-canvas') && document.getElementById('rg-canvas').addEventListener('click', e=>{if(rg_gs.screen!=='playing')return;const rect=rg_canvas.getBoundingClientRect();const cx=(e.clientX-rect.left)*(rg_canvasW/rect.width);const tl=Math.floor(cx/rg_laneW);if(tl!==rg_player.lane){rg_player.lane=Math.max(0,Math.min(RG_STAGES[rg_gs.stage].lanes-1,tl));rg_player.targetX=rg_laneX(rg_player.lane);}});
+
+    // ---- Main loop ----
+    function rg_loop(timestamp) {
+        rg_animRafId = requestAnimationFrame(rg_loop);
+        if(rg_gs.screen==='shop') return;
+        rg_gs.animFrame++;
+        if(rg_gs.screen!=='playing' && rg_gs.screen!=='checking') {
+            if(rg_ctx) { rg_ctx.clearRect(0,0,rg_canvasW,rg_canvasH); rg_drawBackground(); }
+            return;
+        }
+        let shakeX=0,shakeY=0;
+        if(rg_screenShake>0){shakeX=(Math.random()-.5)*rg_screenShake;shakeY=(Math.random()-.5)*rg_screenShake;rg_screenShake-=0.5;}
+        const ctx=rg_ctx; if(!ctx) return;
+        ctx.save(); ctx.translate(shakeX,shakeY);
+        ctx.clearRect(-5,-5,rg_canvasW+10,rg_canvasH+10);
+        rg_drawBackground(); rg_drawLaneFlashes(); rg_drawMissed();
+        const now=performance.now(); rg_spawnTrash(now);
+        rg_trashItems.forEach(t=>{if(t.active)t.y+=t.vy;});
+        rg_trashItems=rg_trashItems.filter(t=>t.active||t.y<rg_canvasH+60);
+        rg_drawTrash(); rg_drawPlayer(); rg_checkCollisions(); rg_drawParticles(); rg_drawHUDBar();
+        ctx.restore();
+    }
+
+    // ---- Save / Load ----
+    async function rg_saveRecycleProgress() {
+        if(!studentInfo) return;
+        const payload = JSON.stringify({ unlockedChars: rgState.unlockedChars, selectedChar: rgState.selectedChar, clearedStage: rgState.clearedStage });
+        try {
+            await callBackend('saveRecycleState', { studentId: studentInfo.id, recycleState: payload });
+        } catch(e) { console.warn('rg_save error', e); }
+    }
+
+    function rg_loadState(recycleStateJSON) {
+        try {
+            if(recycleStateJSON && recycleStateJSON !== '{}') {
+                const s = JSON.parse(recycleStateJSON);
+                if(s.unlockedChars) rgState.unlockedChars = s.unlockedChars;
+                if(typeof s.selectedChar === 'number') rgState.selectedChar = s.selectedChar;
+                if(typeof s.clearedStage === 'number') rgState.clearedStage = s.clearedStage;
+            }
+        } catch(e) { console.log('rg_loadState: new state'); }
+        rg_gs.selectedChar = rgState.selectedChar;
+    }
+
+    // ---- Override calculateCurrentPoints to include recycle char costs ----
+    const _orig_calcPts = calculateCurrentPoints;
+    calculateCurrentPoints = function() {
+        _orig_calcPts();
+        // Add recycle char costs
+        let rgSpent = 0;
+        if(rgState && rgState.unlockedChars) {
+            rgState.unlockedChars.forEach(idx => { rgSpent += RG_CHAR_COSTS[idx] || 0; });
+        }
+        spentPoints += rgSpent;
+        currentPoints = studentStats.totalPoints - spentPoints;
+        document.getElementById('stat-spent').innerText = spentPoints;
+        document.getElementById('game-current-points').innerText = currentPoints;
+        updateShopUI();
+        // update rg shop display
+        const el = document.getElementById('rg-avail-pts');
+        if(el) el.textContent = currentPoints;
+    };
+
+    // ---- Patch doStudentLogin to load recycleState ----
+    const _orig_login = doStudentLogin;
+    doStudentLogin = async function() {
+        // We intercept after original runs – easier to patch response at callBackend level
+        // Instead, patch inside by wrapping the flow via a flag
+        await _orig_login_impl();
+    };
+
+    // Actually: patch is complex because doStudentLogin is async and we'd need to re-wire.
+    // Simpler: We extend doStudentLogin inline in the existing logic via patching callBackend response storage.
+    // Since doStudentLogin calls callBackend('studentLogin', ...) and stores res, we handle recycleState there.
+    // Let's patch the response handler instead by monkey-patching the key line.
+    // ---- The cleanest approach: override doStudentLogin entirely ----
+    doStudentLogin = async function() {
+        const id   = document.getElementById('studentId').value;
+        const pass = document.getElementById('studentPass').value;
+        const btn  = document.getElementById('loginBtn');
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> กำลังโหลด...';
+        btn.disabled = true;
+        try {
+            let res = await callBackend('studentLogin', {studentId: id, password: pass});
+            if (res.status === 'success') {
+                currentIdStore = id; currentPassStore = pass;
+                studentInfo = res.student; studentStats = res.stats; txHistory = res.history;
+                COLS = 5; ROWS = 5;
+                islandGrid = Array(COLS).fill().map(() => Array(ROWS).fill(null));
+                try {
+                    if (res.gameState) {
+                        const savedGrid = JSON.parse(res.gameState);
+                        if(Array.isArray(savedGrid) && savedGrid.length > 0 && Array.isArray(savedGrid[0])) {
+                            islandGrid = savedGrid; COLS = islandGrid.length; ROWS = islandGrid[0].length;
+                        }
+                    }
+                } catch(e) {}
+                // Load recycle state
+                rgState = { unlockedChars: [0], selectedChar: 0, clearedStage: 0 };
+                rg_loadState(res.recycleState || '{}');
+                updateDashboardUI(); renderHistory(); calculateCurrentPoints();
+                document.getElementById('loginView').classList.add('hidden');
+                document.getElementById('mainAppView').classList.remove('hidden');
+                initGameEngine(); loadClassmates(); rg_renderShop();
+                Swal.fire({ title: 'ยินดีต้อนรับ!', text: `พิทักษ์โลกกันเถอะ ${studentInfo.name}`, icon: 'success', timer: 1500, showConfirmButton: false });
+            } else {
+                Swal.fire({icon: 'error', title: 'ว้าา...', text: res.message});
+            }
+        } catch (err) {
+            Swal.fire({icon: 'error', title: 'เกิดข้อผิดพลาด', text: err.toString()});
+        } finally {
+            btn.innerHTML = 'เข้าสู่โลกสีเขียว <i class="fa-solid fa-arrow-right"></i>';
+            btn.disabled = false;
+        }
+    };
+
+    // Patch logout to reset rg state
+    const _orig_logout = logout;
+    logout = function() {
+        _orig_logout();
+        rgState = { unlockedChars: [0], selectedChar: 0, clearedStage: 0 };
+        rg_gs.screen = 'shop';
+        rg_trashItems = []; rg_particles = [];
+        if(rg_animRafId){ cancelAnimationFrame(rg_animRafId); rg_animRafId = null; }
+        // Hide game, show shop panel
+        const outer = document.getElementById('rg-outer');
+        const shop  = document.getElementById('rg-char-shop-panel');
+        if(outer) outer.classList.add('hidden');
+        if(shop) shop.classList.remove('hidden');
+    };
+
+    // Patch switchTab to render shop when switching to recycle
+    const _orig_switchTab = switchTab;
+    switchTab = function(tabId) {
+        _orig_switchTab(tabId);
+        if(tabId === 'recycle') {
+            rg_renderShop();
+            if(rg_canvas && rg_gs.screen !== 'shop') rg_resizeCanvas();
+        }
+    };
+
+  </script>
+</body>
+</html>
