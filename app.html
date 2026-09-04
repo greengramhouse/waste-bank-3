@@ -1336,6 +1336,41 @@
                                 <!-- Waste List Generated Here -->
                             </div>
                         </div>
+
+                        <!--
+                          โซนอันตราย — ล้างธุรกรรมทั้งหมดก่อนเปิดใช้จริง
+                          แยกกรอบสีแดงและวางไว้ท้ายสุด เพื่อไม่ให้กดโดนตอนเลื่อนหาเมนูอื่น
+                          การลบจริงต้องผ่านการพิมพ์ยืนยัน ไม่ใช่แค่กดปุ่ม OK
+                        -->
+                        <div class="mt-6 rounded-xl border-2 border-red-200 bg-red-50/50 p-6">
+                            <h2 class="text-lg font-bold text-red-800 flex items-center gap-2 mb-2">
+                                <i class="fa-solid fa-triangle-exclamation"></i> โซนอันตราย
+                            </h2>
+                            <p class="text-sm text-red-900/80 mb-4">
+                                ใช้ตอนล้างข้อมูลที่ทดลองบันทึกไว้ ก่อนเปิดให้ครูใช้งานจริงเท่านั้น
+                                <b>ลบแล้วเอาคืนไม่ได้</b>
+                            </p>
+
+                            <div class="rounded-lg bg-white border border-red-200 p-4">
+                                <div class="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+                                    <div class="min-w-0">
+                                        <div class="font-semibold text-vintage-800 text-sm">ล้างธุรกรรมทั้งหมด</div>
+                                        <div id="wipeSummary" class="text-xs text-vintage-600 mt-1">กำลังนับรายการ...</div>
+                                    </div>
+                                    <button type="button" id="wipeBtn" onclick="startWipeTransactions()"
+                                        class="shrink-0 px-4 py-3 min-h-[44px] rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <i class="fa-solid fa-trash-can"></i> ล้างข้อมูลธุรกรรม
+                                    </button>
+                                </div>
+
+                                <ul class="mt-4 pt-4 border-t border-red-100 text-xs text-vintage-600 space-y-1.5">
+                                    <li><b>จะลบ:</b> ธุรกรรมรับฝากและถอนเงินทั้งหมด แล้วตั้งยอดเงิน แต้ม และน้ำหนักของทุกคนกลับเป็นศูนย์</li>
+                                    <li><b>ไม่ลบ:</b> รายชื่อนักเรียน ห้องเรียน ประเภทขยะ และบัญชีผู้ใช้ — ยังอยู่ครบ</li>
+                                    <li><b>ประวัติการลบรายการ</b> (deletedTransactions) ลบไม่ได้จากหน้านี้ เพราะเป็นหลักฐานตรวจสอบย้อนหลัง
+                                        ต้องล้างด้วย <code class="bg-vintage-100 px-1 rounded">npm run reset:tx</code> ในเครื่อง</li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2474,6 +2509,7 @@
             if (tabId === 'summary-student') initStudentSummary();
             if (tabId === 'summary-room') initRoomSummary();
             if (tabId === 'summary-teacher') renderTeacherSummary();
+            if (tabId === 'settings') refreshWipeSummary();
         }
 
         // ================= D E P O S I T =================
@@ -4195,6 +4231,181 @@
         }
 
         // ================= S E T T I N G S =================
+
+        // ---------- โซนอันตราย: ล้างธุรกรรมทั้งหมด ----------
+
+        /*
+         * ทำไมต้องมีเมนูนี้ทั้งที่มี `npm run reset:tx` อยู่แล้ว
+         *   สคริปต์ต้องรันในเครื่องที่มี service-account.json ซึ่งมีแค่เครื่องผู้พัฒนา
+         *   แอดมินของโรงเรียนล้างข้อมูลเองไม่ได้ ต้องรอคนอื่นรันให้
+         *
+         * ต่างจากสคริปต์ตรงไหน
+         *   ลบ deletedTransactions ไม่ได้ — Rules กำหนด `allow update, delete: if false`
+         *   ไว้เพราะเป็นหลักฐานตรวจสอบย้อนหลัง ไม่ใช่ข้อจำกัดที่ควรผ่อน
+         *   ถ้าต้องล้างจริง ๆ ใช้ `npm run reset:tx` ซึ่งใช้ Admin SDK ข้าม Rules ได้
+         */
+
+        /**
+         * ข้อความใต้หัวข้อ — ไม่นับจำนวนตอนเปิดหน้า
+         *
+         * compat SDK ไม่มี count() การนับจึงต้องอ่านทุกเอกสารจริง ซึ่งกินโควต้าหลายพัน
+         * ทุกครั้งที่แอดมินแค่เปิดหน้าตั้งค่าไปแก้ราคาขยะ — ไม่คุ้มเลย
+         * จำนวนจริงจะถูกนับตอนกดปุ่มล้าง ซึ่งตอนนั้นต้องอ่านอยู่แล้วเพื่อเอา ref ไปลบ
+         */
+        function refreshWipeSummary() {
+            const el = document.getElementById('wipeSummary');
+            const btn = document.getElementById('wipeBtn');
+            if (!el || currentRole !== 'admin') return;
+            el.textContent = 'กดปุ่มเพื่อดูจำนวนธุรกรรมทั้งหมดก่อนตัดสินใจ — ยังไม่มีอะไรถูกลบจนกว่าจะยืนยัน';
+            btn.disabled = false;
+        }
+
+        /**
+         * ล้างธุรกรรมทั้งหมด — ยืนยันสองชั้นก่อนลงมือ
+         * ชั้นแรกบอกผลกระทบ ชั้นสองให้พิมพ์คำยืนยัน กันกดพลาดขณะถือมือถือ
+         */
+        async function startWipeTransactions() {
+            if (currentRole !== 'admin') return;
+
+            const btn = document.getElementById('wipeBtn');
+            const oldHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-hourglass-half fa-spin"></i> กำลังนับ...';
+
+            // อ่านครั้งเดียวแล้วเก็บ snapshot ไว้ใช้ลบเลย จะได้ไม่ต้องอ่านซ้ำอีกรอบตอนลบ
+            let snap;
+            try {
+                snap = await db.collection('transactions').get();
+            } catch (err) {
+                console.error('นับธุรกรรมไม่สำเร็จ', err);
+                return Swal.fire({ icon: 'error', title: 'อ่านข้อมูลไม่สำเร็จ', text: friendlyError(err), confirmButtonColor: '#16a34a' });
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = oldHtml;
+            }
+
+            const total = snap.size;
+            document.getElementById('wipeSummary').innerHTML = total === 0
+                ? 'ตอนนี้ไม่มีธุรกรรมในระบบ — ฐานสะอาดอยู่แล้ว'
+                : `ตอนนี้มี <b class="text-red-700">${total.toLocaleString('th-TH')}</b> ธุรกรรมในระบบ`;
+
+            if (total === 0) {
+                return Swal.fire({ icon: 'info', title: 'ไม่มีอะไรให้ลบ', text: 'ตอนนี้ระบบไม่มีธุรกรรมอยู่แล้ว', confirmButtonColor: '#16a34a' });
+            }
+
+            const step1 = await Swal.fire({
+                icon: 'warning',
+                title: 'ล้างธุรกรรมทั้งหมด?',
+                html: `
+                    <div style="text-align:left;font-size:.95em;line-height:1.7">
+                        จะลบธุรกรรม <b style="color:#b91c1c">${total.toLocaleString('th-TH')} รายการ</b>
+                        และตั้งยอดเงิน แต้ม น้ำหนักของทุกคนกลับเป็นศูนย์<br><br>
+                        <b>รายชื่อนักเรียน ห้องเรียน ประเภทขยะ และบัญชีผู้ใช้ยังอยู่ครบ</b><br><br>
+                        <span style="color:#b91c1c">ลบแล้วเอาคืนไม่ได้</span>
+                    </div>`,
+                showCancelButton: true,
+                confirmButtonText: 'เข้าใจแล้ว ไปต่อ',
+                cancelButtonText: 'ยกเลิก',
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+            });
+            if (!step1.isConfirmed) return;
+
+            const step2 = await Swal.fire({
+                icon: 'warning',
+                title: 'ยืนยันอีกครั้ง',
+                html: 'พิมพ์คำว่า <b>ล้างข้อมูล</b> เพื่อยืนยัน',
+                input: 'text',
+                inputPlaceholder: 'ล้างข้อมูล',
+                showCancelButton: true,
+                confirmButtonText: 'ล้างข้อมูลเดี๋ยวนี้',
+                cancelButtonText: 'ยกเลิก',
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                inputValidator: v => (String(v).trim() !== 'ล้างข้อมูล' ? 'พิมพ์ให้ตรงกับคำว่า ล้างข้อมูล' : undefined),
+            });
+            if (!step2.isConfirmed) return;
+
+            await wipeTransactions(snap.docs);
+        }
+
+        /** ลงมือลบจริง — ทำทีละชุดพร้อมแสดงความคืบหน้า เพราะอาจมีหลายพันรายการ */
+        async function wipeTransactions(docs) {
+            const total = docs.length;
+            const btn = document.getElementById('wipeBtn');
+            btn.disabled = true;
+
+            Swal.fire({
+                title: 'กำลังล้างข้อมูล...',
+                html: '<div id="wipeProgress">เริ่มต้น...</div>',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                didOpen: () => Swal.showLoading(),
+            });
+            const say = msg => { const el = document.getElementById('wipeProgress'); if (el) el.innerHTML = msg; };
+
+            try {
+                // ---- 1. ลบธุรกรรมทีละ 300 รายการ ----
+                // ใช้ ref จาก snapshot ที่อ่านไว้ตอนนับ ไม่ต้องอ่านซ้ำอีกรอบ
+                // batch จำกัด 500 operation ต่อครั้ง เผื่อไว้ไม่ให้ชนเพดาน
+                let deleted = 0;
+                for (let i = 0; i < docs.length; i += 300) {
+                    const batch = db.batch();
+                    docs.slice(i, i + 300).forEach(d => batch.delete(d.ref));
+                    await batch.commit();
+
+                    deleted += Math.min(300, docs.length - i);
+                    say(`ลบธุรกรรมแล้ว ${deleted.toLocaleString('th-TH')} จาก ${total.toLocaleString('th-TH')} รายการ`);
+                }
+
+                // ---- 2. ตั้งยอดทุกคนกลับเป็นศูนย์ ----
+                // ไม่ลบเอกสาร balances เพราะ Rules ใช้ฟิลด์ room ในเอกสารนี้ตรวจสิทธิ์
+                // ถ้าเอกสารหาย ครูจะบันทึกรายการไม่ได้ทันที
+                say('กำลังตั้งยอดคงเหลือกลับเป็นศูนย์...');
+                const balSnap = await db.collection('balances').get();
+                const dirty = balSnap.docs.filter(d => {
+                    const v = d.data();
+                    return (v.balance || 0) !== 0 || (v.totalDeposit || 0) !== 0 || (v.totalWithdraw || 0) !== 0
+                        || (v.totalPoints || 0) !== 0 || (v.totalWeight || 0) !== 0;
+                });
+
+                for (let i = 0; i < dirty.length; i += 300) {
+                    const batch = db.batch();
+                    dirty.slice(i, i + 300).forEach(d => batch.update(d.ref, {
+                        totalDeposit: 0, totalWithdraw: 0, balance: 0,
+                        totalPoints: 0, totalWeight: 0, lastTxAt: null,
+                    }));
+                    await batch.commit();
+                    say(`ตั้งยอดใหม่แล้ว ${Math.min(i + 300, dirty.length)} จาก ${dirty.length} คน`);
+                }
+
+                // ล้างข้อมูลที่ค้างในหน่วยความจำ แล้วเริ่มเฝ้าใหม่จากฐานที่ว่างแล้ว
+                clearRangeCaches();
+                transactions = [];
+                startRealtime();
+                renderAllViews();
+                await refreshWipeSummary();
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'ล้างข้อมูลเรียบร้อย',
+                    html: `ลบธุรกรรม ${deleted.toLocaleString('th-TH')} รายการ<br>ตั้งยอดใหม่ ${dirty.length} คน`,
+                    confirmButtonColor: '#16a34a',
+                });
+            } catch (err) {
+                console.error('ล้างข้อมูลไม่สำเร็จ', err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'ล้างข้อมูลไม่สำเร็จ',
+                    text: friendlyError(err) + ' — ข้อมูลบางส่วนอาจถูกลบไปแล้ว กดล้างซ้ำอีกครั้งได้',
+                    confirmButtonColor: '#16a34a',
+                });
+                await refreshWipeSummary();
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
         function renderSettingsWasteList() {
             const list = document.getElementById('settingsWasteList');
             list.innerHTML = '';
