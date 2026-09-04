@@ -20,7 +20,8 @@
     "live": "node tools/switch-live.mjs",
     "live:new": "node tools/switch-live.mjs firestore",
     "live:old": "node tools/switch-live.mjs sheets",
-    "notice": "node tools/add-student-notice.mjs"
+    "notice": "node tools/add-student-notice.mjs",
+    "reset:tx": "node tools/reset-transactions.mjs"
   },
   "dependencies": {
     "firebase-admin": "^13.0.2"
