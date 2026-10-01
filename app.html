@@ -4921,12 +4921,11 @@
             pdfMake.createPdf({
                 pageSize: 'A4',
                 pageMargins: [30, 30, 30, 40],
-                defaultStyle: { font: 'THSarabunNew', fontSize: 14 },
+                defaultStyle: { font: 'THSarabunPSK', fontSize: 14 },
                 styles: {
                     header: { fontSize: 20, bold: true, alignment: 'center' },
-                    // ตัวหนาใช้ฟอนต์ Sarabun-ExtraBold ซึ่งดูใหญ่กว่า THSarabunNew ที่ขนาดเท่ากัน
-                    // จึงลดขนาดหัวตารางลงจากตัวเนื้อหา (14) ให้ดูสมดุลกัน
-                    tableHeader: { bold: true, fontSize: 12, alignment: 'center', fillColor: '#eeeeee' }
+                    // THSarabunPSK มีตัวหนาในตระกูลเดียวกัน ขนาดเท่าตัวปกติ จึงใช้ 14 เท่าเนื้อหาได้
+                    tableHeader: { bold: true, fontSize: 14, alignment: 'center', fillColor: '#eeeeee' }
                 },
                 content: [
                     { text: 'รายงานยอดฝาก - ถอน - คงเหลือ รายบุคคล', style: 'header' },
@@ -4952,19 +4951,24 @@
         function initPdfFonts() {
             pdfMake.fonts = {
                 THSarabunNew: {
-                    normal: 'https://guykorat.github.io/font/THSarabunNew.ttf',
-                    bold: 'https://guykorat.github.io/font/Sarabun-ExtraBold.ttf',
-                    italics: 'https://guykorat.github.io/font/THSarabunNew.ttf',
-                    bolditalics: 'https://guykorat.github.io/font/Sarabun-ExtraBold.ttf'
+                    normal: 'https://greengramhouse.github.io/my-font/THSarabunNew.ttf',
+                    bold: 'https://greengramhouse.github.io/my-font/Sarabun-ExtraBold.ttf',
                 },
                 Charm: {
-                    normal: 'https://guykorat.github.io/font/Charm-Bold.ttf',
-                    bold: 'https://guykorat.github.io/font/Charm-Regular.ttf',
+                    normal: 'https://greengramhouse.github.io/my-font/Charm-Bold.ttf',
+                    bold: 'https://greengramhouse.github.io/my-font/Charm-Regular.ttf',
                 },
                 Prompt: {
-                    normal: 'https://guykorat.github.io/font/Prompt-Regular.ttf',
-                    bold: 'https://guykorat.github.io/font/Prompt-Bold.ttf',
+                    normal: 'https://greengramhouse.github.io/my-font/Prompt-Regular.ttf',
+                    bold: 'https://greengramhouse.github.io/my-font/Prompt-Bold.ttf',
                 },
+                THSarabunPSK: {
+                    normal: 'https://greengramhouse.github.io/my-font/THSarabunPSK.ttf',
+                    bold: 'https://greengramhouse.github.io/my-font/THSarabunPSK-Bold.ttf',
+                    italics: 'https://greengramhouse.github.io/my-font/THSarabunPSK-Italic.ttf',
+                    bolditalics: 'https://greengramhouse.github.io/my-font/THSarabunPSK-BoldItalic.ttf',
+                },
+                // pdfMake ใช้ Roboto เป็นฟอนต์ตั้งต้น ถ้าไม่ลงทะเบียนไว้จะ error ทันทีที่มีข้อความไหนไม่ระบุ font
                 Roboto: {
                     normal: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Regular.ttf',
                     bold: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.66/fonts/Roboto/Roboto-Medium.ttf',
@@ -5098,7 +5102,7 @@
                 pageOrientation: 'landscape',
                 pageSize: 'A4',
                 defaultStyle: {
-                    font: 'THSarabunNew',
+                    font: 'THSarabunPSK',
                     fontSize: 12
                 },
                 styles: {
