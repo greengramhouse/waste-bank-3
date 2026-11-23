@@ -17,6 +17,7 @@
     "balances": "node tools/recompute-balances.mjs",
     "set-passwords": "node tools/set-passwords.mjs",
     "handout": "node tools/make-handout.mjs",
+    "handout:line": "node tools/make-line-flex.mjs",
     "live": "node tools/switch-live.mjs",
     "live:new": "node tools/switch-live.mjs firestore",
     "live:old": "node tools/switch-live.mjs sheets",

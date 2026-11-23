@@ -11,6 +11,21 @@ export const EMAIL_DOMAIN = 'ecopink.local';
 
 export const TZ = 'Asia/Bangkok';
 
+/**
+ * ที่อยู่เว็บที่แจ้งครู (ใบพิมพ์ + ข้อความไลน์)
+ * ระหว่างช่วงคู่ขนาน หน้าแรกยังเป็นระบบเดิมบน Google Sheets ที่หน้าตาเหมือนกันทุกอย่าง
+ * จึงต้องลงท้ายด้วย /app.html ไม่งั้นครูจะกรอกรหัสใหม่ในระบบเดิมแล้วเข้าไม่ได้
+ * ตอนตัดระบบเสร็จแล้ว (npm run live:new) ค่อยเปลี่ยนกลับเป็น root
+ */
+export const SITE_URL = 'https://greengramhouse.github.io/waste-bank-3/app.html';
+
+/** ครูเห็นเฉพาะห้องตัวเอง แอดมินเห็นทุกห้อง — เขียนให้ชัดตอนแจ้งรหัสจะได้ไม่ต้องอธิบายซ้ำ */
+export function accountScopeText(acc) {
+  if (acc.role === 'admin') return 'ผู้ดูแลระบบ · ทำได้ทุกห้อง';
+  const rooms = (acc.rooms || []).join(', ');
+  return `ครูประจำชั้น ${rooms || '—'} · บันทึกได้เฉพาะห้องนี้`;
+}
+
 /** ห้องที่บุคลากรสังกัด — ไม่ใช่ห้องเรียนจริง จึงไม่มีใน ROOM_ORDER */
 export const STAFF_ROOM = 'ส่วนกลาง';
 export const STAFF_ROOM_ORDER = 99;

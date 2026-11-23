@@ -14,6 +14,7 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { SITE_URL as DEFAULT_SITE_URL, accountScopeText as scopeText } from './config.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..');
@@ -24,12 +25,8 @@ const URL_ARG = (() => {
   const i = process.argv.indexOf('--url');
   return i !== -1 && process.argv[i + 1] ? process.argv[i + 1] : null;
 })();
-/**
- * ระหว่างช่วงคู่ขนาน หน้าแรกของเว็บยังเป็นระบบเดิมบน Google Sheets ที่หน้าตาเหมือนกันทุกอย่าง
- * บัตรจึงต้องพิมพ์ที่อยู่ที่ลงท้ายด้วย /app.html ไม่งั้นครูจะกรอกรหัสใหม่ในระบบเดิมแล้วเข้าไม่ได้
- * ตอนตัดระบบเสร็จแล้ว (npm run live:new) ค่อยเปลี่ยนกลับเป็น root
- */
-const SITE_URL = URL_ARG || 'https://greengramhouse.github.io/waste-bank-3/app.html';
+/** ค่าเริ่มต้นและเหตุผลที่ต้องลงท้าย /app.html อยู่ใน config.mjs */
+const SITE_URL = URL_ARG || DEFAULT_SITE_URL;
 
 const accountsFile = JSON.parse(await readFile(join(HERE, 'accounts.json'), 'utf8'));
 const accounts = accountsFile.accounts || [];
@@ -42,13 +39,6 @@ if (missing.length) {
 }
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-
-/** ครูเห็นเฉพาะห้องตัวเอง แอดมินเห็นทุกห้อง — เขียนให้ชัดบนบัตรเลยจะได้ไม่ต้องอธิบายซ้ำ */
-function scopeText(a) {
-  if (a.role === 'admin') return 'ผู้ดูแลระบบ · ทำได้ทุกห้อง';
-  const rooms = (a.rooms || []).join(', ');
-  return `ครูประจำชั้น ${rooms || '—'} · บันทึกได้เฉพาะห้องนี้`;
-}
 
 const cards = accounts.map(a => `
     <div class="card">
