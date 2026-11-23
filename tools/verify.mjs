@@ -55,21 +55,23 @@ async function main() {
       db.collection('rooms').get(),
       db.collection('users').get(),
       db.collection('wasteTypes').get(),
-      db.collection('balances').select().get(),
+      db.collection('balances').select('room').get(),
       db.collection('transactions').limit(1).get(),
     ]);
 
   const members = membersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-  const users = usersSnap.docs.map(d => ({ uid: d.id, ...d.data() }));
+  // บัญชีครูที่ย้ายออกถูกปิดไว้ (active:false) ไม่ได้ลบ — ไม่นับเป็นบัญชีที่ใช้งาน
+  const allUsers = usersSnap.docs.map(d => ({ uid: d.id, ...d.data() }));
+  const users = allUsers.filter(u => u.active !== false);
+  const disabledUsers = allUsers.filter(u => u.active === false);
   const students = members.filter(m => m.type === 'student');
   const staff = members.filter(m => m.type === 'staff');
 
   // ---------- จำนวน ----------
   console.log('จำนวนเอกสาร');
-  check(members.length === 303, `members ${members.length} (นักเรียน ${students.length} / บุคลากร ${staff.length})`,
-        `members ${members.length} — คาดหวัง 303 (นักเรียน 284 / บุคลากร 19)`);
   check(students.length === 284, `นักเรียน ${students.length} คน`, `นักเรียน ${students.length} คน — คาดหวัง 284`);
-  check(staff.length === 19, `บุคลากร ${staff.length} คน`, `บุคลากร ${staff.length} คน — คาดหวัง 19`);
+  // จำนวนบุคลากรเปลี่ยนตามครูย้ายเข้า/ออก (คนที่ย้ายออกยังอยู่เพราะมีประวัติ) จึงไม่ตรึงตัวเลข
+  console.log(`  · บุคลากร ${staff.length} คน · members รวม ${members.length}`);
   check(roomsSnap.size === 11, `rooms ${roomsSnap.size} ห้อง`, `rooms ${roomsSnap.size} — คาดหวัง 11`);
   check(typesSnap.size >= 1, `wasteTypes ${typesSnap.size} ประเภท`, 'ไม่มีประเภทขยะเลย');
   check(balancesSnap.size === members.length, `balances ${balancesSnap.size} เอกสาร ครบทุกคน`,
@@ -117,7 +119,10 @@ async function main() {
   const accountsFile = JSON.parse(await readFile(join(HERE, 'accounts.json'), 'utf8'));
   check(users.length === accountsFile.accounts.length,
         `users ${users.length} บัญชี ตรงกับ accounts.json`,
-        `users ${users.length} แต่ accounts.json มี ${accountsFile.accounts.length}`);
+        `users ที่ใช้งาน ${users.length} แต่ accounts.json มี ${accountsFile.accounts.length} — รัน seed ใหม่`);
+  if (disabledUsers.length) {
+    console.log(`  · ปิดใช้งานแล้ว ${disabledUsers.length} บัญชี (ครูที่ย้ายออก): ${disabledUsers.map(u => `${u.username} ${u.name}`).join(', ')}`);
+  }
 
   const admins = users.filter(u => u.role === 'admin');
   check(admins.length >= 1, `แอดมิน ${admins.length} บัญชี`, 'ไม่มีบัญชีแอดมินเลย — จะแก้ประเภทขยะไม่ได้');
@@ -158,6 +163,13 @@ async function main() {
   const noRoom = balSample.docs.filter(d => !d.data().room);
   check(noRoom.length === 0, 'เอกสาร balances มีฟิลด์ room ครบ (Security Rules ต้องใช้)',
         `${noRoom.length} เอกสารไม่มี room — ครูจะอ่าน/เขียนยอดไม่ได้`);
+
+  // ห้องใน balances ต้องตรงกับ members — Rules ตัดสินสิทธิ์แก้ยอดจาก balances.room
+  // ถ้าค้างห้องเก่า (ครูย้ายห้อง) ครูจะรับฝากขยะในชื่อตัวเองไม่ได้
+  const memberRoom = new Map(members.map(m => [m.id, m.room]));
+  const roomMismatch = balancesSnap.docs.filter(d => memberRoom.has(d.id) && d.data().room !== memberRoom.get(d.id));
+  check(roomMismatch.length === 0, 'ห้องใน balances ตรงกับ members ทุกคน',
+        `ห้องใน balances ไม่ตรงกับ members: ${roomMismatch.map(d => `${d.id} (${d.data().room}≠${memberRoom.get(d.id)})`).join(', ')} — รัน seed ใหม่`);
 
   // ---------- สรุป ----------
   console.log('\n─────────────────────────────────────────');

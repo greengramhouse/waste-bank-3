@@ -26,7 +26,7 @@ import { getAuth } from 'firebase-admin/auth';
 
 import {
   PROJECT_ID, ROOM_ORDER, STAFF_ROOM, STAFF_ROOM_ORDER, SCHOOL_YEAR,
-  cleanName, isStaffRow, usernameToEmail,
+  cleanName, isStaffRow, usernameToEmail, stripTeacherPrefix, EMAIL_DOMAIN,
 } from './config.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -149,6 +149,8 @@ async function seedMembers(dataRows, accountsFile) {
     });
   }
 
+  await addStaffFromAccounts(members, accountsFile, staffRoomByMemberId, seen);
+
   const students = members.filter(m => m.doc.type === 'student').length;
   const staff = members.length - students;
   console.log(`\n[1/5] members — นักเรียน ${students} คน, บุคลากร ${staff} คน`);
@@ -158,6 +160,52 @@ async function seedMembers(dataRows, accountsFile) {
     (batch, m) => batch.set(db.collection('members').doc(m.id), m.doc, { merge: true }));
 
   return members;
+}
+
+/**
+ * ครูที่ย้ายมาใหม่หลังดึงชีต — มีใน accounts.json แต่ไม่มีใน Data.json
+ *
+ * ถ้าไม่สร้างให้ ครูจะล็อกอินได้แต่รับฝากขยะในชื่อตัวเองไม่ได้ (ไม่มี members/balances)
+ * และ export-sheets รอบหน้าจะไม่ทำให้หายไป เพราะ seed ใช้ merge ไม่ลบเอกสาร
+ *
+ * ถ้าแอดมินเพิ่มคนนี้จากหน้าเว็บไว้แล้ว เก็บชื่อ/คำนำหน้าที่แอดมินกรอกไว้ แก้แค่ห้อง
+ * ถ้ายังไม่มี สร้างจากชื่อใน accounts.json — ไม่รู้คำนำหน้าจริง จึงใช้ "ครู" แทนการเดาเพศ
+ */
+async function addStaffFromAccounts(members, accountsFile, staffRoomByMemberId, seen) {
+  const extra = accountsFile.accounts.filter(a => a.memberId && !seen.has(a.memberId));
+  if (!extra.length) return;
+
+  const snaps = await db.getAll(...extra.map(a => db.collection('members').doc(a.memberId)));
+  extra.forEach((acc, i) => {
+    const id = acc.memberId;
+    const room = staffRoomByMemberId[id] || STAFF_ROOM;
+    const roomFields = {
+      room,
+      roomOrder: ROOM_ORDER[room] ?? STAFF_ROOM_ORDER,
+      type: 'staff',
+      active: true,
+      schoolYear: SCHOOL_YEAR,
+      updatedAt: FieldValue.serverTimestamp(),
+    };
+
+    let doc;
+    if (snaps[i].exists) {
+      const cur = snaps[i].data();
+      doc = { ...roomFields, fullName: cur.fullName || acc.name };
+      console.log(`  ↻ บุคลากร ${id} ${doc.fullName} มีในระบบแล้ว (ไม่อยู่ในชีต) — ปรับห้องเป็น ${room}`);
+    } else {
+      const [name, ...rest] = stripTeacherPrefix(acc.name).split(' ');
+      doc = {
+        id, title: 'ครู', name, surname: rest.join(' '),
+        fullName: `ครู${name} ${rest.join(' ')}`.trim(),
+        position: 'ครู',
+        ...roomFields,
+      };
+      console.log(`  + บุคลากรใหม่ ${id} ${doc.fullName} ห้อง ${room} (จาก accounts.json — ไม่มีในชีต)`);
+    }
+    seen.add(id);
+    members.push({ id, doc });
+  });
 }
 
 // ---------------------------------------------------------------- 2. rooms
@@ -265,7 +313,8 @@ async function seedUsers(accountsFile, members) {
     }
 
     if (user) {
-      await auth.updateUser(user.uid, { displayName: acc.name });
+      // disabled: false — ครูที่เคยถูกปิดบัญชี (ย้ายออก) แล้วกลับมา ใส่ชื่อคืนใน accounts.json ก็ใช้ได้ทันที
+      await auth.updateUser(user.uid, { displayName: acc.name, disabled: false });
     } else {
       user = await auth.createUser({ email, password, displayName: acc.name, emailVerified: true });
     }
@@ -293,7 +342,46 @@ async function seedUsers(accountsFile, members) {
     console.log(`  ✓ ${acc.username.padEnd(9)} ${acc.role.padEnd(7)} ${(acc.rooms || []).join(',') || '-'}${tag}`);
   }
 
+  await disableRemovedAccounts(accounts);
   return accounts;
+}
+
+/**
+ * ปิดบัญชีของครูที่ถูกเอาออกจาก accounts.json (ย้ายโรงเรียน / ลาออก)
+ *
+ * "ปิด" ไม่ใช่ "ลบ" — ธุรกรรมเก่าเก็บ recordedByUid ไว้ ลบบัญชีแล้วสืบย้อนไม่ได้ว่าใครบันทึก
+ * ส่วนบัญชีขายขยะ (members/balances) ของครูคนนั้นไม่แตะ ยอดเงินยังอยู่ให้แอดมินถอนคืนได้
+ *
+ * ทำสามชั้นเพราะแต่ละชั้นกันคนละช่อง:
+ *   disabled: true          ล็อกอินใหม่ไม่ได้ และต่ออายุ token ไม่ได้
+ *   revokeRefreshTokens     ตัด session ที่ค้างอยู่บนมือถือครู
+ *   claims ว่าง + active:false   token ที่ยังไม่หมดอายุ (≤1 ชม.) ก็ผ่าน Rules ไม่ได้
+ */
+async function disableRemovedAccounts(accounts) {
+  const keep = new Set(accounts.map(a => usernameToEmail(a.username)));
+  const stale = [];
+  let pageToken;
+  do {
+    const page = await auth.listUsers(1000, pageToken);
+    page.users.forEach(u => {
+      if (u.email?.endsWith(`@${EMAIL_DOMAIN}`) && !keep.has(u.email) && !u.disabled) stale.push(u);
+    });
+    pageToken = page.pageToken;
+  } while (pageToken);
+
+  if (!stale.length) return;
+
+  for (const u of stale) {
+    const label = `${u.email.split('@')[0].padEnd(9)} ${u.displayName || ''}`;
+    if (DRY_RUN) { console.log(`  [dry] ✗ ปิดบัญชี ${label} (ไม่อยู่ใน accounts.json แล้ว)`); continue; }
+    await auth.updateUser(u.uid, { disabled: true });
+    await auth.revokeRefreshTokens(u.uid);
+    await auth.setCustomUserClaims(u.uid, null);   // ล้าง role/rooms ทั้งหมด
+    await db.collection('users').doc(u.uid).set({
+      active: false, rooms: [], disabledAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+    console.log(`  ✗ ปิดบัญชี ${label} (ไม่อยู่ใน accounts.json แล้ว)`);
+  }
 }
 
 // ---------------------------------------------------------------- 5. balances
@@ -305,26 +393,27 @@ async function seedUsers(accountsFile, members) {
  *  1. Security Rules ตรวจสิทธิ์จาก resource.data.room ในเอกสารนี้ ถ้าไม่มีเอกสารก็ตรวจไม่ได้
  *  2. หน้า "ค้นหายอดรายคน" อ่านจากที่นี่ ไม่ต้องสแกน transactions ทั้งหมด
  *
- * ใช้ create() ไม่ใช่ set() เพื่อไม่ให้รันซ้ำแล้วยอดที่สะสมไว้ถูกล้างเป็นศูนย์
+ * เอกสารเดิมไม่ถูกเขียนทับยอด เพื่อไม่ให้รันซ้ำแล้วยอดที่สะสมไว้ถูกล้างเป็นศูนย์
+ *
+ * แต่ "ห้อง" ของเอกสารเดิมต้องตามห้องใน members เสมอ (ดู syncBalanceRooms)
  */
 async function seedBalances(members) {
-  console.log(`\n[5/5] balances — ตรวจและสร้างเอกสารที่ยังไม่มี`);
+  console.log(`\n[5/5] balances — สร้างเอกสารที่ยังไม่มี และปรับห้องให้ตรงกับ members`);
 
-  if (DRY_RUN) {
-    console.log(`  [dry] balances: สูงสุด ${members.length} เอกสาร`);
-    return;
-  }
+  // อ่านเฉพาะฟิลด์ห้อง ไม่ดึงตัวเลขยอดมาเลย — ส่วนนี้ไม่มีทางไปแตะยอดเงินได้
+  const existing = new Map();
+  const snap = await db.collection('balances').select('room', 'roomOrder').get();
+  snap.forEach(d => existing.set(d.id, d.data()));
 
-  const existing = new Set();
-  const snap = await db.collection('balances').select().get();
-  snap.forEach(d => existing.add(d.id));
+  await syncBalanceRooms(members, existing);
 
   const missing = members.filter(m => !existing.has(m.id));
   if (!missing.length) {
-    console.log(`  ✓ ครบอยู่แล้ว (${existing.size} เอกสาร) ไม่แตะยอดเดิม`);
+    console.log(`  ✓ มีเอกสารครบทุกคนแล้ว (${existing.size} เอกสาร) ไม่แตะยอดเดิม`);
     return;
   }
 
+  missing.forEach(m => console.log(`  + ${m.id.padEnd(5)} ${m.doc.fullName}  (${m.doc.room}) ยอดเริ่ม 0`));
   await commitInChunks('balances (สร้างใหม่)', missing, (batch, m) => {
     batch.set(db.collection('balances').doc(m.id), {
       memberId: m.id,
@@ -340,7 +429,51 @@ async function seedBalances(members) {
       lastTxAt: null,
     });
   });
-  if (existing.size) console.log(`  (ของเดิม ${existing.size} เอกสาร ไม่ถูกแตะ)`);
+  if (existing.size) console.log(`  (ยอดของเดิม ${existing.size} เอกสาร ไม่ถูกแตะ)`);
+}
+
+/**
+ * ปรับ room / roomOrder ใน balances ให้ตรงกับ members — แก้แค่สองฟิลด์นี้ ไม่แตะตัวเลขยอดเลย
+ *
+ * ทำไมต้องมี: ห้องของบุคลากรคำนวณใหม่จาก accounts.json ทุกครั้งที่ seed
+ * (ย้ายครูจาก ป.6 ไป ป.4 / เอาครูออกจากระบบแล้วไปอยู่ 'ส่วนกลาง') แต่ balances สร้างครั้งเดียว
+ * ห้องในนั้นจึงค้างเป็นห้องเก่า และ Rules ตัดสินสิทธิ์แก้ยอดจาก balances.room
+ * → ครูที่ย้ายมา ป.4 รับฝากขยะในชื่อตัวเองไม่ได้ เพราะกฎมองว่าไปเขียนยอดของ ป.6
+ *
+ * ยึด members ใน Firestore เป็นหลัก แล้วทับด้วยรายการที่ seed รอบนี้เพิ่งคำนวณ
+ * เพื่อให้ครอบคลุมคนที่แอดมินเพิ่มจากหน้าเว็บ (ไม่อยู่ใน Data.json) และให้ --dry-run เห็นผลจริง
+ *
+ * ธุรกรรมเก่าไม่ย้ายห้องตาม — เป็นบันทึกว่าตอนนั้นอยู่ห้องไหน และห้ามแก้ธุรกรรมอยู่แล้ว
+ */
+async function syncBalanceRooms(seededMembers, existing) {
+  const target = new Map();
+  const memberSnap = await db.collection('members').select('room', 'roomOrder', 'fullName').get();
+  memberSnap.forEach(d => target.set(d.id, d.data()));
+  for (const m of seededMembers) target.set(m.id, m.doc);
+
+  const changes = [];
+  const orphans = [];
+  for (const [id, bal] of existing) {
+    const m = target.get(id);
+    if (!m || !m.room) { orphans.push(id); continue; }
+    // สมาชิกที่เพิ่มจากหน้าเว็บอาจไม่มี roomOrder — Firestore ไม่รับค่า undefined จึงต้องเติมให้
+    const roomOrder = m.roomOrder ?? ROOM_ORDER[m.room] ?? STAFF_ROOM_ORDER;
+    if (bal.room !== m.room || bal.roomOrder !== roomOrder) {
+      changes.push({ id, from: bal.room, to: m.room, roomOrder, name: m.fullName || '' });
+    }
+  }
+
+  if (orphans.length) {
+    console.warn(`  ⚠ balances ที่ไม่มีใน members ${orphans.length} เอกสาร (ไม่แตะ): ${orphans.join(', ')}`);
+  }
+  if (!changes.length) {
+    console.log('  ✓ ห้องใน balances ตรงกับ members ทุกคน');
+    return;
+  }
+
+  changes.forEach(c => console.log(`  ↻ ${c.id.padEnd(5)} ${c.name}  ห้อง ${c.from ?? '-'} → ${c.to}`));
+  await commitInChunks('balances (ปรับห้อง)', changes, (batch, c) =>
+    batch.update(db.collection('balances').doc(c.id), { room: c.to, roomOrder: c.roomOrder }));
 }
 
 // ---------------------------------------------------------------- main
